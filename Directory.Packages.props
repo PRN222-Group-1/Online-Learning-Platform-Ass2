@@ -27,5 +27,6 @@
     <!-- Mapping -->
     <PackageVersion Include="AutoMapper" Version="13.0.1" />
     <PackageVersion Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
+    <PackageVersion Include="BCrypt.Net-Next" Version="4.0.3" />
   </ItemGroup>
 </Project>

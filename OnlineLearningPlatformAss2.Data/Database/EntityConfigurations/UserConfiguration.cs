@@ -30,11 +30,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasForeignKey(u => u.RoleId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // One-to-One: User -> Profile
-        builder.HasOne(u => u.Profile)
-            .WithOne()
-            .HasForeignKey<Profile>(p => p.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
+        // One-to-One: User -> Profile (configured in ProfileConfiguration)
 
         // Indices
         builder.HasIndex(u => u.Email)

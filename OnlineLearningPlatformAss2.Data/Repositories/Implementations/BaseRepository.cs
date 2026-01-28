@@ -1,11 +1,12 @@
+using OnlineLearningPlatformAss2.Data.Database;
 using OnlineLearningPlatformAss2.Data.Database.Entities;
 using OnlineLearningPlatformAss2.Data.Repositories.Interfaces;
 
 namespace OnlineLearningPlatformAss2.Data.Repositories.Implementations;
 
-public class BaseRepository<T>(DbContext context) : IBaseRepository<T> where T : BaseEntity
+public class BaseRepository<T>(OnlineLearningPlatformAss2Context context) : IBaseRepository<T> where T : BaseEntity
 {
-    protected readonly DbContext _context = context ?? throw new ArgumentNullException(nameof(context));
+    protected readonly OnlineLearningPlatformAss2Context _context = context ?? throw new ArgumentNullException(nameof(context));
     protected readonly DbSet<T> _dbSet = context.Set<T>();
 
     // Read Operations

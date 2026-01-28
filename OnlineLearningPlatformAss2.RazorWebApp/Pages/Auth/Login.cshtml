@@ -11,9 +11,25 @@
         <p class="subtitle">Please enter your details to sign in.</p>
     </div>
 
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @Model.ErrorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @Model.SuccessMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
     <form method="post" class="login-form">
         <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-        
+
         <div class="form-group">
             <label asp-for="Input.Email" class="form-label">Email</label>
             <input asp-for="Input.Email" class="form-input" placeholder="student@university.edu" aria-required="true" />
@@ -35,24 +51,33 @@
         </div>
 
         <button type="submit" class="btn-primary">Sign in</button>
-        
+
         <div class="divider">
             <span>Or continue with</span>
         </div>
 
         <button type="submit" class="btn-google" asp-page-handler="Google" formnovalidate>
-            <svg class="google-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M23.52 12.29c0-.85-.08-1.68-.23-2.48H12v4.7h6.45c-.28 1.5-1.11 2.76-2.37 3.61v3h3.84c2.25-2.07 3.55-5.12 3.55-8.83z" fill="#4285F4"/>
-                <path d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.84-3c-1.08.72-2.46 1.15-4.09 1.15-3.13 0-5.78-2.11-6.73-4.96H1.41v3.13C3.41 21.36 7.42 24 12 24z" fill="#34A853"/>
-                <path d="M5.27 14.28a7.0 7.0 0 0 1-.36-2.28 7.0 7.0 0 0 1 .36-2.28V6.59H1.41a11.95 11.95 0 0 0 0 10.82l3.86-3.13z" fill="#FBBC05"/>
-                <path d="M12 4.77c1.76 0 3.34.61 4.59 1.8l3.43-3.44C17.95 1.16 15.24 0 12 0 7.42 0 3.41 2.64 1.41 6.59l3.86 3.13c.95-2.85 3.6-4.96 6.73-4.96z" fill="#EA4335"/>
+            <svg class="google-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                xmlns="http://www.w3.org/2000/svg">
+                <path
+                    d="M23.52 12.29c0-.85-.08-1.68-.23-2.48H12v4.7h6.45c-.28 1.5-1.11 2.76-2.37 3.61v3h3.84c2.25-2.07 3.55-5.12 3.55-8.83z"
+                    fill="#4285F4" />
+                <path
+                    d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.84-3c-1.08.72-2.46 1.15-4.09 1.15-3.13 0-5.78-2.11-6.73-4.96H1.41v3.13C3.41 21.36 7.42 24 12 24z"
+                    fill="#34A853" />
+                <path
+                    d="M5.27 14.28a7.0 7.0 0 0 1-.36-2.28 7.0 7.0 0 0 1 .36-2.28V6.59H1.41a11.95 11.95 0 0 0 0 10.82l3.86-3.13z"
+                    fill="#FBBC05" />
+                <path
+                    d="M12 4.77c1.76 0 3.34.61 4.59 1.8l3.43-3.44C17.95 1.16 15.24 0 12 0 7.42 0 3.41 2.64 1.41 6.59l3.86 3.13c.95-2.85 3.6-4.96 6.73-4.96z"
+                    fill="#EA4335" />
             </svg>
             Sign in with Google
         </button>
     </form>
-    
+
     <div class="login-footer">
-        <p>Don't have an account? <a href="#" class="register-link">Contact Admin</a></p>
+        <p>Don't have an account? <a href="/Auth/Register" class="register-link">Create one here</a></p>
     </div>
 </div>
 

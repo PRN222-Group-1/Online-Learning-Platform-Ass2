@@ -24,8 +24,8 @@ public class ProfileConfiguration : IEntityTypeConfiguration<Profile>
             .HasMaxLength(1000);
 
         // One-to-One: Profile -> User
-        builder.HasOne<User>()
-            .WithOne(u => u.Profile)
+        builder.HasOne(p => p.User)        // Profile có một User (Dùng p.User thay vì HasOne<User>)
+            .WithOne(u => u.Profile)      // User cũng có một Profile
             .HasForeignKey<Profile>(p => p.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 

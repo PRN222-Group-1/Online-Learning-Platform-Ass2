@@ -12,5 +12,13 @@
 
     <ItemGroup>
         <PackageReference Include="Serilog" />
+        <PackageReference Include="BCrypt.Net-Next" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="DTOs\" />
+      <Folder Include="Services\Implementations\" />
+      <Folder Include="Services\Interfaces\" />
+      <Folder Include="Validators\" />
     </ItemGroup>
 </Project>

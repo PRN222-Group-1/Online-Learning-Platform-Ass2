@@ -1,0 +1,103 @@
+@page
+@model OnlineLearningPlatformAss2.RazorWebApp.Pages.Account.RegisterModel
+@{
+  ViewData["Title"] = "Register";
+  Layout = "_LoginLayout";
+}
+
+<div class="login-container">
+  <div class="login-header">
+    <h1>Create Account</h1>
+    <p class="subtitle">Join our learning community and start your journey</p>
+  </div>
+
+  @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+  {
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      @Model.ErrorMessage
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  }
+
+  @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+  {
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      @Model.SuccessMessage
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  }
+
+  <form method="post" class="login-form">
+    <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+
+    <!-- Name Fields Row -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+      <div class="form-group">
+        <label asp-for="Input.FirstName" class="form-label">First Name</label>
+        <input asp-for="Input.FirstName" class="form-input" placeholder="John" aria-required="true" />
+        <span asp-validation-for="Input.FirstName" class="text-danger"></span>
+      </div>
+
+      <div class="form-group">
+        <label asp-for="Input.LastName" class="form-label">Last Name</label>
+        <input asp-for="Input.LastName" class="form-input" placeholder="Doe" aria-required="true" />
+        <span asp-validation-for="Input.LastName" class="text-danger"></span>
+      </div>
+    </div>
+
+    <!-- Email Field -->
+    <div class="form-group">
+      <label asp-for="Input.Email" class="form-label">Email</label>
+      <input asp-for="Input.Email" class="form-input" placeholder="student@university.edu" aria-required="true" />
+      <span asp-validation-for="Input.Email" class="text-danger"></span>
+    </div>
+
+    <!-- Password Field -->
+    <div class="form-group">
+      <label asp-for="Input.Password" class="form-label">Password</label>
+      <input asp-for="Input.Password" class="form-input" placeholder="••••••••" aria-required="true" />
+      <span asp-validation-for="Input.Password" class="text-danger"></span>
+      <small style="color: #64748B; display: block; margin-top: 0.5rem;">
+        Password must be at least 6 characters long
+      </small>
+    </div>
+
+    <!-- Confirm Password Field -->
+    <div class="form-group">
+      <label asp-for="Input.ConfirmPassword" class="form-label">Confirm Password</label>
+      <input asp-for="Input.ConfirmPassword" class="form-input" placeholder="••••••••" aria-required="true" />
+      <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+    </div>
+
+    <!-- Terms and Conditions -->
+    <div class="form-group" style="margin-bottom: 1.5rem;">
+      <div class="checkbox-group" style="flex-direction: row; gap: 0.75rem;">
+        <input asp-for="Input.AgreeToTerms" class="checkbox-input" />
+        <label asp-for="Input.AgreeToTerms" class="checkbox-label" style="margin: 0;">
+          I agree to the <a href="#" style="color: #0891B2; text-decoration: underline;">Terms and Conditions</a>
+        </label>
+      </div>
+      <span asp-validation-for="Input.AgreeToTerms" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn-primary" style="margin-bottom: 1rem;">Create Account</button>
+
+    <div class="divider">
+      <span>Already have an account?</span>
+    </div>
+
+    <a href="/Auth/Login" class="btn-secondary-cta"
+      style="display: block; text-align: center; padding: 0.875rem 2rem; text-decoration: none; background-color: transparent; border: 1px solid rgba(255, 255, 255, 0.2); color: #0891B2; border-radius: 6px; font-weight: 600; transition: all 0.2s ease;">
+      Sign In Instead
+    </a>
+  </form>
+
+  <div class="login-footer">
+    <p>Have questions? <a href="#" style="color: #0891B2; font-weight: 600; text-decoration: none;">Contact Support</a>
+    </p>
+  </div>
+</div>
+
+@section Scripts {
+  <partial name="_ValidationScriptsPartial" />
+}

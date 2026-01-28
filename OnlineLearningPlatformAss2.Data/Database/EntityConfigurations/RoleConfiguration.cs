@@ -36,13 +36,14 @@ public class RoleConfiguration : IEntityTypeConfiguration<Role>
             .HasFilter("[IsDeleted] = 0");
 
         // Seed Data
+        var seedDate = new DateTime(2026, 1, 28, 0, 0, 0, DateTimeKind.Utc);
         builder.HasData(
             new Role
             {
                 Id = Guid.Parse("00000000-0000-0000-0000-000000000001"),
                 Name = "Admin",
                 Description = "Administrator with full access",
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = seedDate,
                 IsDeleted = false
             },
             new Role
@@ -50,7 +51,7 @@ public class RoleConfiguration : IEntityTypeConfiguration<Role>
                 Id = Guid.Parse("00000000-0000-0000-0000-000000000002"),
                 Name = "Instructor",
                 Description = "Course instructor",
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = seedDate,
                 IsDeleted = false
             },
             new Role
@@ -58,7 +59,7 @@ public class RoleConfiguration : IEntityTypeConfiguration<Role>
                 Id = Guid.Parse("00000000-0000-0000-0000-000000000003"),
                 Name = "Student",
                 Description = "Student learner",
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = seedDate,
                 IsDeleted = false
             }
         );

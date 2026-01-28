@@ -1,8 +1,7 @@
 namespace OnlineLearningPlatformAss2.Data.Database.Entities;
 
-public class Profile
+public class Profile : BaseEntity
 {
-    public Guid Id { get; set; }
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
     public string AvatarUrl { get; set; } = string.Empty;
