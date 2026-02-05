@@ -1,0 +1,268 @@
+@page "/Course/Browse"
+@model OnlineLearningPlatformAss2.RazorWebApp.Pages.Course.BrowseModel
+@{
+    ViewData["Title"] = "Browse Courses";
+    var displayCount = Model.Courses?.Count() ?? Model.TotalCourses;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/course-browse.css" asp-append-version="true" />
+}
+
+<div class="browse-page">
+    <!-- Hero Section -->
+    <section class="browse-hero">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="hero-title">Discover Your Next Course</h1>
+                    <p class="hero-subtitle">Explore our collection of courses to advance your skills</p>
+                </div>
+                <div class="col-lg-4">
+                    <div class="search-stats">
+                        <div class="stat">
+                            <span class="number">@displayCount</span>
+                            <span class="label">COURSES AVAILABLE</span>
+                        </div>
+                        <div class="stat">
+                            <span class="number">@Model.Categories.Count()</span>
+                            <span class="label">CATEGORIES</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Filters & Search -->
+    <section class="browse-filters">
+        <div class="container">
+            <form method="get" id="filterForm">
+                <div class="filter-bar">
+                    <div class="row align-items-center g-3">
+                        <!-- Search Box -->
+                        <div class="col-lg-4 col-md-6">
+                            <div class="search-box">
+                                <i class="bi bi-search"></i>
+                                <input type="text" 
+                                       name="SearchTerm"
+                                       id="searchInput" 
+                                       placeholder="Search courses..." 
+                                       value="@Model.SearchTerm"
+                                       autocomplete="off">
+                                @if (!string.IsNullOrEmpty(Model.SearchTerm))
+                                {
+                                    <button type="button" class="search-clear" id="searchClear">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Category Filter -->
+                        <div class="col-lg-3 col-md-6">
+                            <div class="filter-dropdown">
+                                <select name="CategoryId" id="categoryFilter" class="form-select">
+                                    <option value="">All Categories</option>
+                                    @foreach (var category in Model.Categories)
+                                    {
+                                        <option value="@category.Id" selected="@(Model.CategoryId == category.Id)">
+                                            @category.Name
+                                        </option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Sort Options -->
+                        <div class="col-lg-3 col-md-6">
+                            <div class="filter-dropdown">
+                                <select name="SortBy" id="sortFilter" class="form-select">
+                                    <option value="newest" selected="@(Model.SortBy == "newest")">Newest First</option>
+                                    <option value="title" selected="@(Model.SortBy == "title")">Title A-Z</option>
+                                    <option value="price_low" selected="@(Model.SortBy == "price_low")">Price: Low to High</option>
+                                    <option value="price_high" selected="@(Model.SortBy == "price_high")">Price: High to Low</option>
+                                    <option value="rating" selected="@(Model.SortBy == "rating")">Highest Rated</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Results Count -->
+                        <div class="col-lg-2 col-md-6 text-end">
+                            <div class="results-count">
+                                <strong>@displayCount</strong> courses
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Filters -->
+                @if (!string.IsNullOrEmpty(Model.SearchTerm) || Model.CategoryId.HasValue)
+                {
+                    <div class="active-filters">
+                        <span class="filter-label">Active filters:</span>
+                        <div class="filter-tags">
+                            @if (!string.IsNullOrEmpty(Model.SearchTerm))
+                            {
+                                <span class="filter-tag">
+                                    Search: "@Model.SearchTerm"
+                                    <a href="@Url.Page("/Course/Browse", new { CategoryId = Model.CategoryId, SortBy = Model.SortBy })" class="filter-remove">
+                                        <i class="bi bi-x"></i>
+                                    </a>
+                                </span>
+                            }
+                            @if (Model.CategoryId.HasValue)
+                            {
+                                <span class="filter-tag">
+                                    Category: @Model.SelectedCategoryName
+                                    <a href="@Url.Page("/Course/Browse", new { SearchTerm = Model.SearchTerm, SortBy = Model.SortBy })" class="filter-remove">
+                                        <i class="bi bi-x"></i>
+                                    </a>
+                                </span>
+                            }
+                        </div>
+                        <a href="@Url.Page("/Course/Browse")" class="clear-all-filters">
+                            Clear all
+                        </a>
+                    </div>
+                }
+            </form>
+        </div>
+    </section>
+
+    <!-- Course Grid -->
+    <section class="browse-content">
+        <div class="container" id="courseGridContainer">
+            @await Html.PartialAsync("_CourseGrid", new ViewDataDictionary(ViewData) { 
+                { "Courses", Model.Courses }, 
+                { "TotalCourses", Model.TotalCourses },
+                { "SearchTerm", Model.SearchTerm },
+                { "SelectedCategoryName", Model.SelectedCategoryName }
+            })
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script>
+        // AJAX-based filtering
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('courseGridContainer');
+            const searchInput = document.getElementById('searchInput');
+            const categoryFilter = document.getElementById('categoryFilter');
+            const sortFilter = document.getElementById('sortFilter');
+            const searchClear = document.getElementById('searchClear');
+            
+            let searchTimeout;
+            
+            async function updateGrid() {
+                // Show loading state
+                container.style.opacity = '0.5';
+                container.style.pointerEvents = 'none';
+
+                const params = new URLSearchParams({
+                    handler: 'CourseGrid',
+                    SearchTerm: searchInput.value.trim(),
+                    CategoryId: categoryFilter.value,
+                    SortBy: sortFilter.value
+                });
+
+                try {
+                    const response = await fetch(`?${params.toString()}`);
+                    if (response.ok) {
+                        const html = await response.text();
+                        container.innerHTML = html;
+                        
+                        // Update URL without reload
+                        const newUrl = `?${new URLSearchParams({
+                            SearchTerm: searchInput.value,
+                            CategoryId: categoryFilter.value,
+                            SortBy: sortFilter.value
+                        }).toString()}`;
+                        window.history.pushState({ path: newUrl }, '', newUrl);
+                    }
+                } catch (error) {
+                    console.error('Error filtering courses:', error);
+                } finally {
+                    container.style.opacity = '1';
+                    container.style.pointerEvents = 'auto';
+                }
+            }
+            
+            // Auto-submit on input change with debounce
+            searchInput?.addEventListener('input', () => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => updateGrid(), 500);
+                
+                // Show/hide clear button
+                if (searchClear) {
+                    searchClear.style.display = searchInput.value ? 'block' : 'none';
+                }
+            });
+            
+            // Clear search
+            searchClear?.addEventListener('click', () => {
+                searchInput.value = '';
+                searchClear.style.display = 'none';
+                updateGrid();
+            });
+            
+            // Auto-submit on filter change
+            categoryFilter?.addEventListener('change', () => updateGrid());
+            sortFilter?.addEventListener('change', () => updateGrid());
+
+            // Handle back/forward buttons
+            window.addEventListener('popstate', () => {
+                location.reload(); // Simplest way to handle history for now
+            });
+
+            // ===== SignalR Real-time Updates =====
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl("/hubs/course")
+                .withAutomaticReconnect()
+                .build();
+
+            connection.on("ReceiveCourseAdded", (course) => {
+                console.log("New course added in real-time:", course.title);
+                showToast(`New course added: ${course.title}`, 'success');
+                updateGrid(); // Refresh the grid
+            });
+
+            connection.on("ReceiveCourseUpdated", (course) => {
+                console.log("Course updated in real-time:", course.title);
+                showToast(`Course updated: ${course.title}`, 'info');
+                updateGrid();
+            });
+
+            connection.on("ReceiveCourseDeleted", (courseId) => {
+                console.log("Course deleted:", courseId);
+                showToast("A course has been removed.", 'warning');
+                updateGrid();
+            });
+
+            connection.start()
+                .then(() => console.log("SignalR CourseHub connected."))
+                .catch(err => console.error("SignalR connection error:", err));
+
+            // Toast notification helper
+            function showToast(message, type) {
+                const toast = document.createElement('div');
+                toast.className = `alert alert-${type} position-fixed bottom-0 end-0 m-3 shadow-lg`;
+                toast.style.zIndex = 9999;
+                toast.innerHTML = `<i class="bi bi-bell-fill me-2"></i>${message}`;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 4000);
+            }
+        });
+
+        // Add clearAllFilters to global scope for the partial view
+        window.clearAllFilters = function() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('categoryFilter').value = '';
+            // Trigger change manually or call updateGrid
+            const event = new Event('change');
+            document.getElementById('categoryFilter').dispatchEvent(event);
+        };
+    </script>
+}

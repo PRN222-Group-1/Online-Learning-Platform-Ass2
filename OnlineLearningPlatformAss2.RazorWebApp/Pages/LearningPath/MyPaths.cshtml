@@ -1,0 +1,253 @@
+@page "/LearningPath/MyPaths"
+@model OnlineLearningPlatformAss2.RazorWebApp.Pages.LearningPath.MyPathsModel
+
+@{
+    ViewData["Title"] = "My Learning Paths - LearnHub";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/learning-paths.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/my-paths.css" asp-append-version="true" />
+}
+
+<div class="my-paths-page">
+    <div class="container">
+        <!-- Header -->
+        <div class="page-header">
+            <div class="header-content">
+                <h1>My Learning Paths</h1>
+                <p>Track your progress through structured learning journeys</p>
+            </div>
+            <div class="header-actions">
+                <a asp-page="/LearningPath/Browse" class="btn btn-outline-primary">
+                    <i class="bi bi-search me-2"></i>
+                    Browse More Paths
+                </a>
+                <a asp-page="/Assessment/Start" class="btn btn-primary">
+                    <i class="bi bi-lightning-charge me-2"></i>
+                    Get Recommendations
+                </a>
+            </div>
+        </div>
+
+        @if (Model.HasPaths)
+        {
+            <!-- Learning Paths Grid -->
+            <div class="paths-grid">
+                @foreach (var path in Model.EnrolledPaths)
+                {
+                    <div class="path-progress-card">
+                        <div class="path-header">
+                            <div class="path-info">
+                                <h4 class="path-title">
+                                    <a asp-page="/LearningPath/Details" asp-route-id="@path.PathId">@path.PathTitle</a>
+                                </h4>
+                                <p class="path-description">@path.PathDescription</p>
+                            </div>
+                            @if (path.IsCompleted)
+                            {
+                                <div class="completion-badge">
+                                    <i class="bi bi-trophy-fill"></i>
+                                    <span>Completed</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="status-badge status-@path.Status.ToLower()">
+                                    @path.Status
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Progress Section -->
+                        <div class="progress-section">
+                            <div class="progress-info">
+                                <div class="progress-text">
+                                    <strong>@path.CompletedCourses of @path.TotalCourses courses completed</strong>
+                                    @if (!string.IsNullOrEmpty(path.CurrentCourseTitle))
+                                    {
+                                        <div class="current-course">
+                                            <small class="text-muted">Currently learning: @path.CurrentCourseTitle</small>
+                                        </div>
+                                    }
+                                </div>
+                                <div class="progress-percentage">
+                                    @path.Progress.ToString("F0")%
+                                </div>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar" style="width: @(path.Progress)%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="path-actions">
+                            @if (path.IsCompleted)
+                            {
+                                <a asp-page="/LearningPath/Details" asp-route-id="@path.PathId" class="btn btn-outline-success">
+                                    <i class="bi bi-eye me-2"></i>
+                                    Review Path
+                                </a>
+                                <button class="btn btn-outline-secondary" onclick="downloadCertificate('@path.PathId')">
+                                    <i class="bi bi-download me-2"></i>
+                                    Certificate
+                                </button>
+                            }
+                            else
+                            {
+                                <a asp-page="/LearningPath/Details" asp-route-id="@path.PathId" class="btn btn-primary">
+                                    <i class="bi bi-play-circle me-2"></i>
+                                    Continue Learning
+                                </a>
+                                <a asp-page="/LearningPath/Details" asp-route-id="@path.PathId" class="btn btn-outline-secondary">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    View Details
+                                </a>
+                            }
+                        </div>
+
+                        <!-- Enrollment Info -->
+                        <div class="enrollment-info">
+                            <div class="info-item">
+                                <i class="bi bi-calendar3"></i>
+                                <span>Started @path.EnrolledAt.ToString("MMM dd, yyyy")</span>
+                            </div>
+                            @if (path.CompletedAt.HasValue)
+                            {
+                                <div class="info-item">
+                                    <i class="bi bi-flag-fill"></i>
+                                    <span>Completed @path.CompletedAt.Value.ToString("MMM dd, yyyy")</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Learning Stats -->
+            <div class="learning-stats">
+                <h3>Your Learning Statistics</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="bi bi-signpost-2"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h4>@Model.EnrolledPaths.Count</h4>
+                            <p>Active Learning Paths</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="bi bi-trophy"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h4>@Model.EnrolledPaths.Count(p => p.IsCompleted)</h4>
+                            <p>Completed Paths</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="bi bi-book"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h4>@Model.EnrolledPaths.Sum(p => p.CompletedCourses)</h4>
+                            <p>Courses Completed</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="bi bi-graph-up"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h4>@(Model.EnrolledPaths.Any() ? Model.EnrolledPaths.Average(p => p.Progress).ToString("F0") : "0")%</h4>
+                            <p>Average Progress</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- Empty State -->
+            <div class="empty-state">
+                <div class="empty-illustration">
+                    <i class="bi bi-signpost-2"></i>
+                </div>
+                <h3>No Learning Paths Yet</h3>
+                <p>Start your structured learning journey with personalized learning paths designed to help you achieve your goals.</p>
+                
+                <div class="empty-actions">
+                    <a asp-page="/Assessment/Start" class="btn btn-primary btn-lg">
+                        <i class="bi bi-lightning-charge me-2"></i>
+                        Take Assessment
+                    </a>
+                    <span class="text-muted mx-3">or</span>
+                    <a asp-page="/LearningPath/Browse" class="btn btn-outline-primary btn-lg">
+                        <i class="bi bi-search me-2"></i>
+                        Browse Learning Paths
+                    </a>
+                </div>
+
+                <!-- Benefits -->
+                <div class="benefits-section">
+                    <h4>Why Choose Learning Paths?</h4>
+                    <div class="benefits-grid">
+                        <div class="benefit-item">
+                            <i class="bi bi-map"></i>
+                            <h5>Structured Learning</h5>
+                            <p>Follow a carefully crafted sequence of courses that build upon each other</p>
+                        </div>
+                        <div class="benefit-item">
+                            <i class="bi bi-target"></i>
+                            <h5>Goal-Oriented</h5>
+                            <p>Each path is designed to help you achieve specific career or skill goals</p>
+                        </div>
+                        <div class="benefit-item">
+                            <i class="bi bi-graph-up-arrow"></i>
+                            <h5>Track Progress</h5>
+                            <p>Monitor your advancement and celebrate milestones along the way</p>
+                        </div>
+                        <div class="benefit-item">
+                            <i class="bi bi-award"></i>
+                            <h5>Earn Certificates</h5>
+                            <p>Get recognized for completing comprehensive learning journeys</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function downloadCertificate(pathId) {
+            // Implementation for certificate download
+            console.log('Downloading certificate for path:', pathId);
+            
+            // Show success message
+            const btn = event.target;
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Downloaded!';
+            btn.disabled = true;
+            
+            setTimeout(() => {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            }, 3000);
+        }
+        
+        // Add smooth scroll animations
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.path-progress-card');
+            cards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 0.1}s`;
+                card.classList.add('fade-in-up');
+            });
+        });
+    </script>
+}

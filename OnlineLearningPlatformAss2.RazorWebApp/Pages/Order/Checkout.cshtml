@@ -1,0 +1,118 @@
+@page
+@model OnlineLearningPlatformAss2.RazorWebApp.Pages.Order.CheckoutModel
+@{
+    ViewData["Title"] = "Checkout";
+}
+
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h4 class="mb-0">Checkout</h4>
+                </div>
+                <div class="card-body">
+                    <h5>Item Summary</h5>
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                        <div>
+                            <h6 class="mb-0">@Model.ItemTitle</h6>
+                            <small class="text-muted">@Model.ItemType</small>
+                        </div>
+                        <span class="h5 mb-0">$@Model.ItemPrice</span>
+                    </div>
+
+                    <form method="post">
+                        <input type="hidden" asp-for="ItemId" />
+                        <input type="hidden" asp-for="ItemType" />
+
+                        <h5 class="mt-4 mb-3">Payment Method</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100 cursor-pointer payment-option" id="cardOption">
+                                    <div class="card-body text-center">
+                                        <div class="h3 mb-2"><i class="bi bi-credit-card"></i></div>
+                                        <h6>Credit Card</h6>
+                                        <input type="radio" asp-for="PaymentMethod" value="Credit Card" checked class="form-check-input" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100 cursor-pointer payment-option" id="paypalOption">
+                                    <div class="card-body text-center">
+                                        <div class="h3 mb-2"><i class="bi bi-paypal"></i></div>
+                                        <h6>PayPal</h6>
+                                        <input type="radio" asp-for="PaymentMethod" value="PayPal" class="form-check-input" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    Complete Purchase - $@Model.ItemPrice
+                                </button>
+                            </div>
+                            <div class="text-center mt-3">
+                                <a asp-page="/Course/Details" asp-route-id="@Model.ItemId" class="text-muted">
+                                    <i class="bi bi-arrow-left me-1"></i> Cancel and Return
+                                </a>
+                            </div>
+                            <p class="text-center text-muted mt-3 small">
+                                This is a secure checkout. By completing your purchase, you agree to our Terms of Service.
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4 border-0">
+                <div class="card-body bg-light rounded">
+                    <h5 class="card-title">Order Summary</h5>
+                    <hr />
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Subtotal</span>
+                        <span>$@Model.ItemPrice</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Tax</span>
+                        <span>$0.00</span>
+                    </div>
+                    <hr />
+                    <div class="d-flex justify-content-between mb-0 h5">
+                        <strong>Total</strong>
+                        <strong>$@Model.ItemPrice</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                You will get immediate access to the @Model.ItemType.ToLower() after successful payment.
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('.payment-option').click(function() {
+                var radio = $(this).find('input[type="radio"]');
+                radio.prop('checked', true);
+                
+                $('.payment-option').removeClass('border-primary shadow-sm');
+                $(this).addClass('border-primary shadow-sm');
+            });
+            
+            // Set initial state
+            $('.payment-option:has(input:checked)').addClass('border-primary shadow-sm');
+        });
+    </script>
+    <style>
+        .cursor-pointer { cursor: pointer; transition: all 0.2s; }
+        .cursor-pointer:hover { transform: translateY(-2px); }
+    </style>
+}

@@ -1,0 +1,91 @@
+@page
+@model OnlineLearningPlatformAss2.RazorWebApp.Pages.Admin.CourseManagementModel
+@{
+    ViewData["Title"] = "Course Management";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+}
+
+<div class="container py-5 admin-dashboard">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0">Course Management</h2>
+            <p class="text-muted">Monitor and manage all courses on the platform.</p>
+        </div>
+        <a asp-page="/Admin/Dashboard" class="btn btn-link text-decoration-none">
+            <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+
+    <div class="card admin-card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table admin-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th class="ps-4">Course</th>
+                            <th>Instructor</th>
+                            <th>Status</th>
+                            <th>Students</th>
+                            <th class="text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var course in Model.Courses)
+                        {
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="fw-bold">@course.Title</div>
+                                    <div class="text-muted small">@course.CategoryName</div>
+                                </td>
+                                <td>@course.InstructorName</td>
+                                <td>
+                                    @if (course.Status == "Published") { <span class="badge bg-success bg-opacity-10 text-success">PUBLISHED</span> }
+                                    else if (course.Status == "Suspended") { <span class="badge bg-dark">SUSPENDED</span> }
+                                    else { <span class="badge bg-secondary">@course.Status.ToUpper()</span> }
+                                </td>
+                                <td>@course.StudentCount</td>
+                                <td class="text-end pe-4">
+                                    @if (course.Status == "Published")
+                                    {
+                                        <button class="btn btn-sm btn-outline-danger" onclick="suspendCourse('@course.Id')">Suspend</button>
+                                    }
+                                    else if (course.Status == "Suspended")
+                                    {
+                                        <button class="btn btn-sm btn-outline-success" onclick="unsuspendCourse('@course.Id')">Unsuspend</button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+@section Scripts {
+<script>
+    async function suspendCourse(id) {
+        if(!confirm('Suspend this course? It will no longer be visible to students.')) return;
+        const response = await fetch(`?handler=Suspend&id=${id}`, {
+            method: 'POST',
+            headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() }
+        });
+        if (response.ok) location.reload();
+    }
+
+    async function unsuspendCourse(id) {
+        if(!confirm('Restore this course to Published status?')) return;
+        const response = await fetch(`?handler=Unsuspend&id=${id}`, {
+            method: 'POST',
+            headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() }
+        });
+        if (response.ok) location.reload();
+    }
+</script>
+}

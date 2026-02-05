@@ -1,0 +1,184 @@
+@page
+@model OnlineLearningPlatformAss2.RazorWebApp.Pages.Admin.DashboardModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+}
+
+<div class="container-fluid py-4 admin-dashboard">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0">System Overview</h2>
+            <p class="text-muted">Monitor your platform's health and growth.</p>
+        </div>
+        <div class="btn-group">
+            <a asp-page="/Admin/CourseModeration" class="btn btn-outline-primary shadow-sm">
+                <i class="bi bi-shield-check me-2"></i>Moderation
+                @if (Model.Stats.PendingCourses > 0)
+                {
+                    <span class="badge bg-danger ms-2">@Model.Stats.PendingCourses</span>
+                }
+            </a>
+            <a asp-page="/Admin/CourseManagement" class="btn btn-outline-info shadow-sm">
+                <i class="bi bi-collection-play me-2"></i>Courses
+            </a>
+            <a asp-page="/Admin/UserManagement" class="btn btn-outline-secondary shadow-sm">
+                <i class="bi bi-people me-2"></i>User Management
+            </a>
+            <a asp-page="/Admin/LiveChat" class="btn btn-outline-success shadow-sm">
+                <i class="bi bi-headset me-2"></i>Live Chat
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="card admin-card p-4 h-100 shadow-sm border-0 bg-primary text-white">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-white bg-opacity-20 p-3 rounded-3 me-3">
+                        <i class="bi bi-wallet2 fs-3 text-white"></i>
+                    </div>
+                    <span class="card-title-admin text-white opacity-75">Net Profit (30%)</span>
+                </div>
+                <h2 class="admin-stat-value mb-0 text-white">@Model.Stats.TotalNetProfit.ToString("C")</h2>
+                <p class="small mb-0 mt-2 opacity-75">Platform commission</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card admin-card p-4 h-100 shadow-sm border-start border-primary border-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-primary bg-opacity-10 p-3 rounded-3 me-3">
+                        <i class="bi bi-currency-dollar text-primary fs-3"></i>
+                    </div>
+                    <span class="card-title-admin">Gross Revenue</span>
+                </div>
+                <h2 class="admin-stat-value mb-0">@Model.Stats.TotalRevenue.ToString("C")</h2>
+                <p class="text-success fw-bold small mb-0 mt-2"><i class="bi bi-arrow-up-right me-1"></i>+12.5%</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card admin-card p-4 h-100 shadow-sm">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-success bg-opacity-10 p-3 rounded-3 me-3">
+                        <i class="bi bi-people text-success fs-3"></i>
+                    </div>
+                    <span class="card-title-admin">Total Students</span>
+                </div>
+                <h2 class="admin-stat-value mb-0">@Model.Stats.TotalUsers</h2>
+                <p class="text-muted small mb-0 mt-2">@Model.Stats.TotalInstructors Instructors</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card admin-card p-4 h-100 shadow-sm">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-info bg-opacity-10 p-3 rounded-3 me-3">
+                        <i class="bi bi-book text-info fs-3"></i>
+                    </div>
+                    <span class="card-title-admin">Active Courses</span>
+                </div>
+                <h2 class="admin-stat-value mb-0">@Model.Stats.TotalCourses</h2>
+                <p class="text-muted small mb-0 mt-2">@Model.Stats.TotalEnrollments Enrollments</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card admin-card p-4 h-100 shadow-sm">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-warning bg-opacity-10 p-3 rounded-3 me-3">
+                        <i class="bi bi-hourglass-split text-warning fs-3"></i>
+                    </div>
+                    <span class="card-title-admin">Pending Reviews</span>
+                </div>
+                <h2 class="admin-stat-value mb-0 text-warning">@Model.Stats.PendingCourses</h2>
+                <p class="text-muted small mb-0 mt-2">Needs moderation</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Recent Orders -->
+        <div class="col-lg-8">
+            <div class="card admin-card shadow-sm h-100">
+                <div class="card-header bg-white py-4 border-0">
+                    <h5 class="fw-bold mb-0">Recent Transactions</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table admin-table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="ps-4">Student</th>
+                                    <th>Item</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                    <th class="text-end pe-4">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var order in Model.Stats.RecentOrders)
+                                {
+                                    <tr>
+                                        <td class="ps-4">
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-sm bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                                    <span class="small fw-bold text-secondary">@order.Username[0].ToString().ToUpper()</span>
+                                                </div>
+                                                <span class="fw-bold">@order.Username</span>
+                                            </div>
+                                        </td>
+                                        <td>@order.ItemTitle</td>
+                                        <td class="fw-bold text-dark">@order.Amount.ToString("C")</td>
+                                        <td class="text-muted small">@order.CreatedAt.ToString("MMM dd, yyyy")</td>
+                                        <td class="text-end pe-4">
+                                            <span class="badge badge-admin badge-active rounded-pill">COMPLETED</span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Quick Actions -->
+        <div class="col-lg-4">
+            <div class="card admin-card shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-4">Quick Actions</h5>
+                    <div class="d-grid gap-3">
+                        <button class="btn btn-light text-start py-3 px-4 border shadow-sm rounded-3 hover-lift">
+                            <i class="bi bi-file-earmark-spreadsheet me-3 text-success fs-5"></i>Export Sales Report
+                        </button>
+                        <button class="btn btn-light text-start py-3 px-4 border shadow-sm rounded-3 hover-lift">
+                            <i class="bi bi-envelope me-3 text-primary fs-5"></i>Broadcast Message
+                        </button>
+                        <button class="btn btn-light text-start py-3 px-4 border shadow-sm rounded-3 hover-lift">
+                            <i class="bi bi-gear me-3 text-secondary fs-5"></i>System Settings
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-lg bg-primary text-white p-4 overflow-hidden position-relative">
+                <div class="position-relative" style="z-index: 2;">
+                    <h5 class="fw-bold">Need Help?</h5>
+                    <p class="small opacity-75 mb-4">Check out our documentation for advanced system configurations.</p>
+                    <a href="#" class="btn btn-light btn-sm rounded-pill px-4 fw-bold">Read Docs</a>
+                </div>
+                <i class="bi bi-shield-lock position-absolute bottom-0 end-0 display-1 opacity-10 mb-n3 me-n3"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hover-lift:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        background-color: #fff;
+    }
+</style>

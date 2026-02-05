@@ -1,0 +1,362 @@
+@page "/LearningPath/Details/{id:guid}"
+@model OnlineLearningPlatformAss2.RazorWebApp.Pages.LearningPath.DetailsModel
+
+@{
+    ViewData["Title"] = Model.LearningPath?.Title ?? "Learning Path Details";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/learning-paths.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/course-details.css" asp-append-version="true" />
+}
+
+@if (Model.LearningPath != null)
+{
+    <!-- Learning Path Hero Section -->
+    <section class="course-hero">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="course-hero-content">
+                        <nav aria-label="breadcrumb" class="course-breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a asp-page="/Index">Home</a></li>
+                                <li class="breadcrumb-item"><a asp-page="/LearningPath/Browse">Learning Paths</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">@Model.LearningPath.Title</li>
+                            </ol>
+                        </nav>
+
+                        <h1 class="course-title">@Model.LearningPath.Title</h1>
+                        <p class="course-subtitle">@Model.LearningPath.Description</p>
+
+                        <div class="course-meta">
+                            <div class="meta-item">
+                                <i class="bi bi-collection"></i>
+                                <span>@Model.LearningPath.Courses.Count courses</span>
+                            </div>
+                            <div class="meta-item">
+                                <i class="bi bi-clock"></i>
+                                <span>@Model.LearningPath.Courses.Sum(c => c.Duration / 60)+ hours</span>
+                            </div>
+                            <div class="meta-item">
+                                <i class="bi bi-bar-chart"></i>
+                                <span>All Levels</span>
+                            </div>
+                            @if (Model.LearningPath.IsCustomPath)
+                            {
+                                <div class="meta-item">
+                                    <i class="bi bi-person-check"></i>
+                                    <span>Personalized for you</span>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="course-badges">
+                            @if (Model.LearningPath.IsCustomPath)
+                            {
+                                <span class="badge badge-personalized">
+                                    <i class="bi bi-person-check"></i>
+                                    Personalized
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-popular">
+                                    <i class="bi bi-star-fill"></i>
+                                    Popular Path
+                                </span>
+                            }
+                            <span class="badge badge-certificate">
+                                <i class="bi bi-award"></i>
+                                Certificate Included
+                            </span>
+                        </div>
+
+                        @if (Model.LearningPath.IsEnrolled)
+                        {
+                            <div class="enrollment-status">
+                                <div class="progress-info">
+                                    <h6>Your Progress</h6>
+                                    <div class="progress-display">
+                                        <div class="progress-bar-container">
+                                            <div class="progress-bar" style="width: @Model.LearningPath.Progress%"></div>
+                                        </div>
+                                        <span class="progress-text">@Model.LearningPath.Progress.ToString("F0")% Complete</span>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="course-preview-card">
+                        <div class="preview-content">
+                            <div class="price-section">
+                                <div class="current-price">@(Model.LearningPath.Price == 0 ? "Free" : Model.LearningPath.Price.ToString("C"))</div>
+                                @if (Model.LearningPath.Price > 0)
+                                {
+                                    <div class="original-price">$@((Model.LearningPath.Price * 1.4m).ToString("F0"))</div>
+                                    <div class="discount-badge">30% off</div>
+                                }
+                            </div>
+
+                            @if (Model.LearningPath.IsEnrolled)
+                            {
+                                <div class="enrolled-section">
+                                    <div class="enrolled-badge">
+                                        <i class="bi bi-check-circle-fill"></i>
+                                        Enrolled
+                                    </div>
+                                    <a asp-page="/LearningPath/MyPaths" class="btn btn-success btn-lg w-100">
+                                        <i class="bi bi-play-circle me-2"></i>
+                                        Continue Learning
+                                    </a>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="enrollment-section">
+                                    @if (Model.IsAuthenticated)
+                                    {
+                                        <a href="/Order/Checkout?id=@Model.LearningPath.Id&type=LearningPath" class="btn btn-primary btn-lg w-100 mb-3">
+                                            <i class="bi bi-plus-circle me-2"></i>
+                                            Enroll in Path
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <a asp-page="/User/Register" class="btn btn-primary btn-lg w-100 mb-3">
+                                            <i class="bi bi-plus-circle me-2"></i>
+                                            Enroll in Path
+                                        </a>
+                                    }
+                                    <button class="btn btn-outline-secondary w-100 mb-3" onclick="alert('Added to wishlist!')">
+                                        <i class="bi bi-heart me-2"></i>
+                                        Add to Wishlist
+                                    </button>
+                                </div>
+                            }
+
+                            <div class="path-includes">
+                                <h6>This learning path includes:</h6>
+                                <ul class="includes-list">
+                                    <li><i class="bi bi-collection"></i> @Model.LearningPath.Courses.Count structured courses</li>
+                                    <li><i class="bi bi-clock"></i> @Model.LearningPath.Courses.Sum(c => c.Duration / 60)+ hours of content</li>
+                                    <li><i class="bi bi-infinity"></i> Lifetime access to all courses</li>
+                                    <li><i class="bi bi-phone"></i> Learn on mobile and desktop</li>
+                                    <li><i class="bi bi-award"></i> Certificate of completion</li>
+                                    <li><i class="bi bi-people"></i> Community support</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Learning Path Content -->
+    <section class="course-content">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8">
+                    <!-- What you'll learn -->
+                    <div class="content-section">
+                        <h3>What you'll learn</h3>
+                        <div class="learning-objectives">
+                            <div class="row">
+                                @for (int i = 0; i < Model.LearningPath.WhatYouWillLearn.Count; i++)
+                                {
+                                    <div class="col-md-6">
+                                        <div class="objective-item">
+                                            <i class="bi bi-check-circle-fill"></i>
+                                            <span>@Model.LearningPath.WhatYouWillLearn[i]</span>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Learning Journey -->
+                    <div class="content-section">
+                        <h3>Your Learning Journey</h3>
+                        <p class="section-description">
+                            This carefully crafted learning path will guide you step-by-step through 
+                            @Model.LearningPath.Courses.Count courses, building your skills progressively.
+                        </p>
+                        
+                        <div class="learning-journey">
+                            @for (int courseIndex = 0; courseIndex < Model.LearningPath.Courses.Count; courseIndex++)
+                            {
+                                var course = Model.LearningPath.Courses[courseIndex];
+                                <div class="journey-step @course.StatusClass">
+                                    <div class="step-number">
+                                        @if (course.IsCompleted)
+                                        {
+                                            <i class="bi bi-check-circle-fill"></i>
+                                        }
+                                        else if (course.IsCurrentCourse)
+                                        {
+                                            <i class="bi bi-play-circle-fill"></i>
+                                        }
+                                        else if (course.IsLocked)
+                                        {
+                                            <i class="bi bi-lock-fill"></i>
+                                        }
+                                        else
+                                        {
+                                            <span>@(courseIndex + 1)</span>
+                                        }
+                                    </div>
+                                    
+                                    <div class="step-content">
+                                        <div class="step-header">
+                                            <h5 class="step-title">@course.Title</h5>
+                                            <div class="step-meta">
+                                                <span class="step-duration">@course.FormattedDuration</span>
+                                                <span class="step-level">@course.Level</span>
+                                                <span class="step-status">@course.StatusText</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <p class="step-description">@course.Description</p>
+                                        
+                                        @if (course.Progress > 0)
+                                        {
+                                            <div class="step-progress">
+                                                <div class="step-progress-bar">
+                                                    <div class="step-progress-fill" style="width: @course.Progress%"></div>
+                                                </div>
+                                                <span class="step-progress-text">@course.Progress.ToString("F0")% complete</span>
+                                            </div>
+                                        }
+                                        
+                                        <div class="step-actions">
+                                            @if (course.IsCompleted)
+                                            {
+                                                <span class="btn btn-sm btn-success disabled">
+                                                    <i class="bi bi-check-circle me-1"></i>
+                                                    Completed
+                                                </span>
+                                            }
+                                            else if (course.IsCurrentCourse)
+                                            {
+                                                <a asp-page="/Course/Learn" asp-route-id="@course.CourseId" class="btn btn-sm btn-primary">
+                                                    <i class="bi bi-play-circle me-1"></i>
+                                                    Continue
+                                                </a>
+                                            }
+                                            else if (course.IsLocked)
+                                            {
+                                                <span class="btn btn-sm btn-outline-secondary disabled">
+                                                    <i class="bi bi-lock me-1"></i>
+                                                    Locked
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <a asp-page="/Course/Details" asp-route-id="@course.CourseId" class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-info-circle me-1"></i>
+                                                    View Course
+                                                </a>
+                                            }
+                                        </div>
+                                    </div>
+                                    
+                                    @if (courseIndex < Model.LearningPath.Courses.Count - 1)
+                                    {
+                                        <div class="step-connector"></div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Prerequisites -->
+                    @if (Model.LearningPath.Prerequisites.Any())
+                    {
+                        <div class="content-section">
+                            <h3>Prerequisites</h3>
+                            <ul class="requirements-list">
+                                @foreach (var prerequisite in Model.LearningPath.Prerequisites)
+                                {
+                                    <li>@prerequisite</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+
+                    <!-- Description -->
+                    <div class="content-section">
+                        <h3>About this Learning Path</h3>
+                        <div class="course-description">
+                            <p>@Model.LearningPath.Description</p>
+                            
+                            @if (Model.LearningPath.IsCustomPath)
+                            {
+                                <div class="custom-path-info">
+                                    <div class="alert alert-info">
+                                        <i class="bi bi-person-check me-2"></i>
+                                        <strong>Personalized for You:</strong> This learning path has been customized based on your skill assessment results and learning goals.
+                                    </div>
+                                </div>
+                            }
+                            
+                            <p>
+                                This comprehensive learning path is designed to take you from your current skill level 
+                                to professional competency. Each course builds upon the previous one, ensuring you 
+                                develop a deep understanding of the subject matter.
+                            </p>
+                            
+                            <p>
+                                You'll gain hands-on experience through practical projects and exercises, and by the 
+                                end of this path, you'll have the confidence and skills needed to excel in your chosen field.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <!-- Sticky sidebar content if needed -->
+                </div>
+            </div>
+        </div>
+    </section>
+}
+else
+{
+    <!-- Learning Path not found -->
+    <section class="course-not-found">
+        <div class="container text-center py-5">
+            <h2>Learning Path Not Found</h2>
+            <p>The learning path you're looking for doesn't exist or has been removed.</p>
+            <a asp-page="/LearningPath/Browse" class="btn btn-primary">Browse Learning Paths</a>
+        </div>
+    </section>
+}
+
+@section Scripts {
+    <script>
+        // Enhanced interactivity for learning journey
+        document.addEventListener('DOMContentLoaded', function() {
+            const journeySteps = document.querySelectorAll('.journey-step');
+            
+            journeySteps.forEach((step, index) => {
+                step.style.animationDelay = `${index * 0.2}s`;
+                step.classList.add('fade-in-up');
+            });
+            
+            // Smooth scroll for step navigation
+            const stepActions = document.querySelectorAll('.step-actions a');
+            stepActions.forEach(action => {
+                action.addEventListener('click', function(e) {
+                    // Add loading state
+                    this.classList.add('loading');
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Loading...';
+                });
+            });
+        });
+    </script>
+}

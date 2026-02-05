@@ -1,0 +1,232 @@
+@page "/Course/MyCourses"
+@model OnlineLearningPlatformAss2.RazorWebApp.Pages.Course.MyCoursesModel
+
+@{
+    ViewData["Title"] = "My Learning - LearnHub";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/my-courses.css" asp-append-version="true" />
+}
+
+<div class="my-courses-page">
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h1 class="page-title">My Learning</h1>
+                    <p class="page-subtitle">Continue your learning journey</p>
+                </div>
+                <div class="col-auto">
+                    <a asp-page="/Index" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Browse More Courses
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        @if (Model.EnrolledCourses != null && Model.EnrolledCourses.Any())
+        {
+            <!-- Learning Stats -->
+            <div class="learning-stats mb-5">
+                <div class="row">
+                    <div class="col-md-3 col-sm-6">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="bi bi-book"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-number">@Model.EnrolledCourses.Count()</div>
+                                <div class="stat-label">Enrolled Courses</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="bi bi-trophy"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-number">3</div>
+                                <div class="stat-label">Completed</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="bi bi-clock"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-number">24h</div>
+                                <div class="stat-label">Learning Time</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="bi bi-award"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-number">2</div>
+                                <div class="stat-label">Certificates</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter and Sort -->
+            <div class="course-controls mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <div class="filter-tabs">
+                            <button class="filter-btn active" data-filter="all">All Courses</button>
+                            <button class="filter-btn" data-filter="in-progress">In Progress</button>
+                            <button class="filter-btn" data-filter="completed">Completed</button>
+                            <button class="filter-btn" data-filter="not-started">Not Started</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="sort-controls">
+                            <select class="form-select" id="sortBy">
+                                <option value="recent">Recently Accessed</option>
+                                <option value="title">Course Title</option>
+                                <option value="progress">Progress</option>
+                                <option value="enrolled">Date Enrolled</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Courses Grid -->
+            <div class="enrolled-courses-grid">
+                <div class="row g-4" id="coursesContainer">
+                    @foreach (var course in Model.EnrolledCourses)
+                    {
+                        <div class="col-lg-4 col-md-6 course-item" data-status="in-progress">
+                            <div class="enrolled-course-card">
+                                <div class="course-image-container">
+                                    @if (!string.IsNullOrEmpty(course.ImageUrl))
+                                    {
+                                        <img src="@course.ImageUrl" alt="@course.Title" class="course-image">
+                                    }
+                                    else
+                                    {
+                                        <div class="course-placeholder">
+                                            <i class="bi bi-book"></i>
+                                        </div>
+                                    }
+                                    <div class="course-overlay">
+                                        <a asp-page="/Course/Learn" asp-route-id="@course.Id" class="btn btn-primary btn-sm">Continue Learning</a>
+                                    </div>
+                                    <div class="course-status">
+                                        <span class="status-badge @(course.Progress >= 100 ? "completed" : course.Progress > 0 ? "in-progress" : "not-started")">
+                                            @(course.Progress >= 100 ? "Completed" : course.Progress > 0 ? "In Progress" : "Not Started")
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="course-card-body">
+                                    <div class="course-category">@course.CategoryName</div>
+                                    <h5 class="course-title">
+                                        <a asp-page="/Course/Details" asp-route-id="@course.Id">@course.Title</a>
+                                    </h5>
+                                    <p class="course-instructor">By @course.InstructorName</p>
+                                    
+                                    <!-- Progress Bar -->
+                                    <div class="progress-section">
+                                        <div class="progress-info">
+                                            <span class="progress-text">Progress</span>
+                                            <span class="progress-percentage">@course.Progress%</span>
+                                        </div>
+                                        <div class="progress">
+                                            <div class="progress-bar" style="width: @course.Progress%"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Course Actions -->
+                                    <div class="course-actions">
+                                        <a asp-page="/Course/Learn" asp-route-id="@course.Id" class="btn btn-primary btn-sm">
+                                            @(course.Progress > 0 ? "Continue" : "Start")
+                                        </a>
+                                        <div class="dropdown">
+                                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="javascript:void(0)" onclick="alert('Rating feature coming soon!')"><i class="bi bi-star me-2"></i>Rate Course</a></li>
+                                                <li><a class="dropdown-item" href="javascript:void(0)" onclick="alert('Sharing feature coming soon!')"><i class="bi bi-share me-2"></i>Share</a></li>
+                                                @if (course.Progress >= 100)
+                                                {
+                                                    <li><a class="dropdown-item" href="javascript:void(0)" onclick="alert('Downloading certificate...')"><i class="bi bi-download me-2"></i>Download Certificate</a></li>
+                                                }
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- Empty State -->
+            <div class="empty-state">
+                <div class="empty-state-content">
+                    <div class="empty-state-icon">
+                        <i class="bi bi-book"></i>
+                    </div>
+                    <h3 class="empty-state-title">Start Your Learning Journey</h3>
+                    <p class="empty-state-text">
+                        You haven't enrolled in any courses yet. Explore our vast library of expert-led courses 
+                        and start learning something new today.
+                    </p>
+                    <div class="empty-state-actions">
+                        <a asp-page="/Index" class="btn btn-primary btn-lg">
+                            <i class="bi bi-search me-2"></i>
+                            Browse Courses
+                        </a>
+                        <a asp-page="/Assessment/Start" class="btn btn-outline-primary btn-lg">
+                            <i class="bi bi-clipboard-check me-2"></i>
+                            Take Skill Assessment
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Filter functionality
+            const filterBtns = document.querySelectorAll('.filter-btn');
+            const courseItems = document.querySelectorAll('.course-item');
+
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    filterBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const filter = this.dataset.filter;
+                    
+                    courseItems.forEach(item => {
+                        if (filter === 'all' || item.dataset.status === filter) {
+                            item.style.display = 'block';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+}

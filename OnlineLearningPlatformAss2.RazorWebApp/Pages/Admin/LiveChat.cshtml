@@ -1,0 +1,163 @@
+@page
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin")]
+@{
+    ViewData["Title"] = "Live Chat Support";
+}
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12 mb-4">
+            <h2 class="fw-bold"><i class="bi bi-headset me-2"></i>Live Chat Support</h2>
+            <p class="text-muted">Manage incoming support requests from users in real-time.</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Pending Requests -->
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="bi bi-hourglass-split me-2"></i>Pending Requests</h5>
+                </div>
+                <div class="card-body p-0" id="pendingRequests">
+                    <div class="p-4 text-center text-muted">
+                        <i class="bi bi-inbox display-4 mb-3 d-block"></i>
+                        <p>No pending requests</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Chat -->
+        <div class="col-md-8">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-chat-dots me-2"></i>Active Conversation</h5>
+                    <span id="chatUserName" class="badge bg-light text-dark">No active chat</span>
+                </div>
+                <div class="card-body p-0" style="height: 400px; overflow-y: auto;" id="adminChatMessages">
+                    <div class="p-4 text-center text-muted h-100 d-flex flex-column justify-content-center">
+                        <i class="bi bi-chat-square-text display-4 mb-3"></i>
+                        <p>Select a pending request to start chatting</p>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="input-group">
+                        <input type="text" id="adminChatInput" class="form-control" placeholder="Type your reply..." disabled>
+                        <button id="adminChatSend" class="btn btn-primary" disabled>
+                            <i class="bi bi-send-fill"></i> Send
+                        </button>
+                        <button id="endChatBtn" class="btn btn-outline-danger" disabled title="End Chat">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const pendingRequests = document.getElementById('pendingRequests');
+    const chatUserName = document.getElementById('chatUserName');
+    const adminChatMessages = document.getElementById('adminChatMessages');
+    const adminChatInput = document.getElementById('adminChatInput');
+    const adminChatSend = document.getElementById('adminChatSend');
+    const endChatBtn = document.getElementById('endChatBtn');
+
+    let currentUserConnectionId = null;
+
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("/hubs/chat")
+        .withAutomaticReconnect()
+        .build();
+
+    connection.on("UserRequestedSupport", (connectionId, userName) => {
+        addPendingRequest(connectionId, userName);
+    });
+
+    connection.on("ReceiveMessage", (from, message, sentAt) => {
+        appendMessage(from, message, 'user');
+    });
+
+    connection.start()
+        .then(() => console.log("Admin ChatHub connected."))
+        .catch(err => console.error("SignalR error:", err));
+
+    function addPendingRequest(connectionId, userName) {
+        const existing = document.querySelector(`[data-connection-id="${connectionId}"]`);
+        if (existing) return;
+
+        const item = document.createElement('div');
+        item.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+        item.dataset.connectionId = connectionId;
+        item.innerHTML = `
+            <div>
+                <strong>${userName}</strong>
+                <small class="text-muted d-block">Waiting for support...</small>
+            </div>
+            <button class="btn btn-sm btn-success join-btn">Join</button>
+        `;
+        item.querySelector('.join-btn').addEventListener('click', () => joinChat(connectionId, userName));
+
+        pendingRequests.innerHTML = '';
+        pendingRequests.appendChild(item);
+    }
+
+    function joinChat(connectionId, userName) {
+        currentUserConnectionId = connectionId;
+        chatUserName.textContent = userName;
+        adminChatInput.disabled = false;
+        adminChatSend.disabled = false;
+        endChatBtn.disabled = false;
+        adminChatMessages.innerHTML = '<div class="p-3 text-center text-muted small">Connected with ' + userName + '</div>';
+
+        connection.invoke("JoinUserChat", connectionId);
+        document.querySelector(`[data-connection-id="${connectionId}"]`)?.remove();
+        if (!pendingRequests.children.length) {
+            pendingRequests.innerHTML = '<div class="p-4 text-center text-muted"><i class="bi bi-inbox display-4 mb-3 d-block"></i><p>No pending requests</p></div>';
+        }
+    }
+
+    adminChatSend.addEventListener('click', sendMessage);
+    adminChatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+
+    function sendMessage() {
+        const msg = adminChatInput.value.trim();
+        if (!msg || !currentUserConnectionId) return;
+
+        connection.invoke("SendMessageToUser", currentUserConnectionId, msg)
+            .then(() => {
+                appendMessage('You', msg, 'admin');
+                adminChatInput.value = '';
+            });
+    }
+
+    endChatBtn.addEventListener('click', () => {
+        if (currentUserConnectionId) {
+            connection.invoke("EndChat", currentUserConnectionId);
+            currentUserConnectionId = null;
+            chatUserName.textContent = 'No active chat';
+            adminChatInput.disabled = true;
+            adminChatSend.disabled = true;
+            endChatBtn.disabled = true;
+            adminChatMessages.innerHTML = '<div class="p-4 text-center text-muted h-100 d-flex flex-column justify-content-center"><i class="bi bi-chat-square-text display-4 mb-3"></i><p>Select a pending request to start chatting</p></div>';
+        }
+    });
+
+    function appendMessage(from, text, type) {
+        const div = document.createElement('div');
+        div.className = `p-2 m-2 rounded ${type === 'admin' ? 'bg-primary text-white ms-auto' : 'bg-light'}`;
+        div.style.maxWidth = '75%';
+        div.style.width = 'fit-content';
+        div.innerHTML = `<small class="d-block fw-bold">${from}</small>${text}`;
+        adminChatMessages.appendChild(div);
+        adminChatMessages.scrollTop = adminChatMessages.scrollHeight;
+    }
+});
+</script>
+}

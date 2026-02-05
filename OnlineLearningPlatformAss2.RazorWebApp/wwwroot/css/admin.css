@@ -1,0 +1,111 @@
+/* ============================================
+   ADMIN DASHBOARD STYLES
+   ============================================ */
+
+.admin-dashboard {
+    color: #1a202c;
+}
+
+.admin-card {
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    border: 1px solid #e2e8f0;
+}
+
+.admin-card:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.card-title-admin {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #4a5568;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.admin-stat-value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #1a202c;
+}
+
+.admin-table thead th {
+    background-color: #f7fafc;
+    color: #4a5568;
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 16px;
+    border-bottom: 2px solid #edf2f7;
+}
+
+.admin-table tbody td {
+    padding: 16px;
+    font-size: 0.95rem;
+    border-bottom: 1px solid #edf2f7;
+}
+
+/* User Management Search */
+.admin-search-container {
+    max-width: 500px;
+}
+
+.admin-search-input {
+    border-radius: 9999px;
+    padding-left: 48px;
+    border: 2px solid #e2e8f0;
+    height: 48px;
+    transition: all 0.2s;
+}
+
+.admin-search-input:focus {
+    border-color: #0056d2;
+    box-shadow: 0 0 0 3px rgba(0, 86, 210, 0.1);
+}
+
+.admin-search-icon {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #a0aec0;
+    z-index: 5;
+}
+
+/* Badge Styles */
+.badge-admin {
+    padding: 6px 14px;
+    font-weight: 700;
+    font-size: 0.75rem;
+    letter-spacing: 0.025em;
+}
+
+.badge-active {
+    background-color: #def7ec !important;
+    color: #03543f !important;
+}
+
+.badge-suspended {
+    background-color: #fde8e8 !important;
+    color: #9b1c1c !important;
+}
+
+/* Modal Enhancements */
+.admin-modal .modal-content {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.admin-modal .modal-header {
+    border-bottom: 1px solid #edf2f7;
+    padding: 24px;
+}
+
+.admin-modal .modal-footer {
+    border-top: 1px solid #edf2f7;
+    padding: 24px;
+}

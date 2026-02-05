@@ -1,0 +1,167 @@
+@using OnlineLearningPlatformAss2.Service.DTOs.Course
+@{
+    var courses = (ViewData["Courses"] as IEnumerable<CourseViewModel>) ?? (ViewBag.Courses as IEnumerable<CourseViewModel>) ?? new List<CourseViewModel>();
+    var totalCourses = (ViewData["TotalCourses"] as int?) ?? (ViewBag.TotalCourses as int?) ?? 0;
+    var searchTerm = (ViewData["SearchTerm"] as string) ?? (ViewBag.SearchTerm as string);
+    var selectedCategoryName = (ViewData["SelectedCategoryName"] as string) ?? (ViewBag.SelectedCategoryName as string);
+}
+
+<!-- Debug info for development -->
+<!-- Courses count: @courses.Count(), Total: @totalCourses, Search: "@searchTerm" -->
+
+@if (courses.Any())
+{
+    <div class="course-grid">
+        <div class="row g-4">
+            @foreach (var course in courses)
+            {
+                <div class="col-lg-4 col-md-6">
+                    <div class="course-card" data-aos="fade-up">
+                        <div class="course-image">
+                            @if (!string.IsNullOrEmpty(course.ImageUrl))
+                            {
+                                <img src="@course.ImageUrl" alt="@course.Title" loading="lazy">
+                            }
+                            else
+                            {
+                                <div class="course-placeholder">
+                                    <i class="bi bi-book"></i>
+                                </div>
+                            }
+                            <div class="course-overlay">
+                                <a asp-page="/Course/Details" asp-route-id="@course.Id" class="btn-preview">
+                                    <i class="bi bi-eye"></i> View Details
+                                </a>
+                            </div>
+                            <div class="course-badge">
+                                <span class="badge bg-primary">@course.CategoryName</span>
+                            </div>
+                        </div>
+                        
+                        <div class="course-content">
+                            <div class="course-meta">
+                                <span class="instructor">
+                                    <i class="bi bi-person"></i>
+                                    @course.InstructorName
+                                </span>
+                                <div class="course-rating">
+                                    <partial name="_StarRating" model="course.Rating" />
+                                </div>
+                            </div>
+                            
+                            <h3 class="course-title">
+                                <a asp-page="/Course/Details" asp-route-id="@course.Id">@course.Title</a>
+                            </h3>
+                            
+                            <p class="course-description">@course.Description</p>
+                            
+                            <div class="course-stats">
+                                <div class="stat">
+                                    <i class="bi bi-clock"></i>
+                                    <span>Self-paced</span>
+                                </div>
+                                <div class="stat">
+                                    <i class="bi bi-people"></i>
+                                    <span>@course.StudentCount students</span>
+                                </div>
+                                <div class="stat">
+                                    <i class="bi bi-collection"></i>
+                                    <span>Multiple modules</span>
+                                </div>
+                            </div>
+                            
+                            <div class="course-footer">
+                                <div class="course-price">
+                                    @if (course.Price == 0)
+                                    {
+                                        <span class="price free">Free</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="price">$@course.Price.ToString("F2")</span>
+                                    }
+                                </div>
+                                
+                                @if (course.IsEnrolled)
+                                {
+                                    <a asp-page="/Course/Learn" asp-route-id="@course.Id" class="btn btn-success">
+                                        <i class="bi bi-play-circle"></i> Continue Learning
+                                    </a>
+                                }
+                                else
+                                {
+                                    <a asp-page="/Course/Details" asp-route-id="@course.Id" class="btn btn-primary">
+                                        <i class="bi bi-plus"></i> Enroll Now
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+    
+    <!-- Results Summary -->
+    <div class="results-summary">
+        <p>
+            Showing @courses.Count() 
+            @if (!string.IsNullOrEmpty(searchTerm) || !string.IsNullOrEmpty(selectedCategoryName))
+            {
+                <text>of @totalCourses results</text>
+                @if (!string.IsNullOrEmpty(searchTerm))
+                {
+                    <text> for "<strong>@searchTerm</strong>"</text>
+                }
+                @if (!string.IsNullOrEmpty(selectedCategoryName) && selectedCategoryName != "All Categories")
+                {
+                    <text> in <strong>@selectedCategoryName</strong></text>
+                }
+            }
+            else
+            {
+                <text>courses</text>
+            }
+        </p>
+    </div>
+}
+else
+{
+    <div class="no-results">
+        <div class="no-results-icon">
+            <i class="bi bi-search"></i>
+        </div>
+        <h3>No courses found</h3>
+        @if (!string.IsNullOrEmpty(searchTerm) || !string.IsNullOrEmpty(selectedCategoryName))
+        {
+            <p>
+                We couldn't find any courses 
+                @if (!string.IsNullOrEmpty(searchTerm))
+                {
+                    <text>matching "<strong>@searchTerm</strong>"</text>
+                }
+                @if (!string.IsNullOrEmpty(selectedCategoryName) && selectedCategoryName != "All Categories")
+                {
+                    <text> in <strong>@selectedCategoryName</strong></text>
+                }
+                . Try adjusting your search criteria.
+            </p>
+            <div class="no-results-actions">
+                <button type="button" class="btn btn-outline-primary" onclick="clearAllFilters()">
+                    Clear Filters
+                </button>
+                <a asp-page="/Course/Browse" class="btn btn-primary">
+                    Browse All Courses
+                </a>
+            </div>
+        }
+        else
+        {
+            <p>No courses are currently available. Please check back later.</p>
+            <div class="alert alert-info mt-3">
+                <strong>Debug Info:</strong> This should not happen with sample data. 
+                Check console for errors or contact support.
+            </div>
+        }
+    </div>
+}

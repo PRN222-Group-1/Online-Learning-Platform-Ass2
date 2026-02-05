@@ -1,0 +1,485 @@
+@page "{id:guid?}"
+@using System.Text.Encodings.Web
+@model OnlineLearningPlatformAss2.RazorWebApp.Pages.Instructor.EditCourseModel
+@{
+    bool isEdit = Model.CourseForm.Id != Guid.Empty;
+    ViewData["Title"] = isEdit ? "Edit Course" : "Create New Course";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a asp-page="/Instructor/Dashboard">Dashboard</a></li>
+                        <li class="breadcrumb-item active">@(isEdit ? "Edit Course" : "Create Course")</li>
+                    </ol>
+                </nav>
+                <div class="d-flex align-items-center">
+                    @if (isEdit)
+                    {
+                        <a asp-page="/Course/Details" asp-route-id="@Model.CourseForm.Id" target="_blank" class="btn btn-outline-secondary btn-sm me-3 border-0">
+                            <i class="bi bi-eye me-1"></i>View Public Page
+                        </a>
+                    }
+                    <h2 class="fw-bold mb-0">@(isEdit ? "Edit Course" : "Create New Course")</h2>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 p-0 overflow-hidden">
+                @if (isEdit)
+                {
+                    <ul class="nav nav-tabs nav-fill bg-light border-bottom" id="courseEditTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active py-3 fw-bold border-0 border-bottom-3" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic-content" type="button" role="tab">
+                                <i class="bi bi-info-circle me-2"></i>Basic Information
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link py-3 fw-bold border-0" id="curriculum-tab" data-bs-toggle="tab" data-bs-target="#curriculum-content" type="button" role="tab">
+                                <i class="bi bi-list-ul me-2"></i>Curriculum Builder
+                            </button>
+                        </li>
+                    </ul>
+                }
+
+                <div class="tab-content" id="courseEditTabsContent">
+                    <!-- Tab 1: Basic Information -->
+                    <div class="tab-pane fade show active" id="basic-content" role="tabpanel">
+                        <div class="p-5">
+                            <form method="post">
+                                <input type="hidden" asp-for="CourseForm.Id" />
+                                
+                                <div class="row g-4">
+                                    <div class="col-md-8">
+                                        <div class="mb-4">
+                                            <label class="form-label fw-bold">Course Title</label>
+                                            <input asp-for="CourseForm.Title" class="form-control form-control-lg" placeholder="e.g. Master C# and .NET Core">
+                                            <span asp-validation-for="CourseForm.Title" class="text-danger small"></span>
+                                        </div>
+
+                                        <div class="mb-4">
+                                            <label class="form-label fw-bold">Description</label>
+                                            <textarea asp-for="CourseForm.Description" class="form-control" rows="10" 
+                                                      placeholder="Share what students will learn and achieve..."></textarea>
+                                            <span asp-validation-for="CourseForm.Description" class="text-danger small"></span>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <div class="card bg-light border-0 p-4 mb-4">
+                                            <h6 class="fw-bold mb-3">Settings</h6>
+                                            
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-bold">Category</label>
+                                                <select asp-for="CourseForm.CategoryId" class="form-select">
+                                                    <option value="">Select a category</option>
+                                                    @foreach (var cat in Model.Categories)
+                                                    {
+                                                        <option value="@cat.Id">@cat.Name</option>
+                                                    }
+                                                </select>
+                                                <span asp-validation-for="CourseForm.CategoryId" class="text-danger small"></span>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-bold">Price ($)</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">$</span>
+                                                    <input asp-for="CourseForm.Price" class="form-control" type="number" step="0.01">
+                                                </div>
+                                                <span asp-validation-for="CourseForm.Price" class="text-danger small"></span>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-bold">Difficulty Level</label>
+                                                <select asp-for="CourseForm.Level" class="form-select">
+                                                    <option value="All Levels">All Levels</option>
+                                                    <option value="Beginner">Beginner</option>
+                                                    <option value="Intermediate">Intermediate</option>
+                                                    <option value="Advanced">Advanced</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-bold">Language</label>
+                                                <select asp-for="CourseForm.Language" class="form-select">
+                                                    <option value="English">English</option>
+                                                    <option value="Vietnamese">Vietnamese</option>
+                                                    <option value="Spanish">Spanish</option>
+                                                    <option value="French">French</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="form-check form-switch mb-0">
+                                                <input asp-for="CourseForm.IsFeatured" class="form-check-input" type="checkbox">
+                                                <label class="form-check-label small fw-bold">Featured Course</label>
+                                            </div>
+                                        </div>
+
+                                        <div class="card bg-light border-0 p-4">
+                                            <h6 class="fw-bold mb-3">Course Image</h6>
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-bold">Image URL</label>
+                                                <input asp-for="CourseForm.ImageUrl" class="form-control mb-3" placeholder="https://unsplash.com/...">
+                                                @if (!string.IsNullOrEmpty(Model.CourseForm.ImageUrl))
+                                                {
+                                                    <img src="@Model.CourseForm.ImageUrl" class="rounded img-fluid shadow-sm" alt="Preview">
+                                                }
+                                                else
+                                                {
+                                                    <div class="bg-white rounded d-flex align-items-center justify-content-center" style="aspect-ratio: 16/9;">
+                                                        <i class="bi bi-image text-muted display-4"></i>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center mt-5 pt-4 border-top">
+                                    <a asp-page="/Instructor/Dashboard" class="btn btn-link text-decoration-none text-muted">Cancel</a>
+                                    <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5">
+                                        <i class="bi bi-check-lg me-2"></i>@(isEdit ? "Update Basic Info" : "Create Course & Continue")
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Tab 2: Curriculum Builder (Only for Edit) -->
+                    @if (isEdit && Model.FullCourse != null)
+                    {
+                        <div class="tab-pane fade" id="curriculum-content" role="tabpanel">
+                            <div class="p-5">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div>
+                                        <h4 class="fw-bold mb-1">Course Content</h4>
+                                        <p class="text-muted small">Manage the structure of your course with modules and lessons.</p>
+                                    </div>
+                                    <button class="btn btn-primary rounded-pill hstack gap-2" onclick="showModuleModal()">
+                                        <i class="bi bi-plus-lg"></i>
+                                        <span>Add Module</span>
+                                    </button>
+                                </div>
+
+                                <div class="curriculum-list mt-4">
+                                    @foreach (var module in Model.FullCourse.Modules.OrderBy(m => m.OrderIndex))
+                                    {
+                                        <div class="module-card card border-0 shadow-sm mb-4" data-module-id="@module.Id">
+                                            <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                                                <div class="d-flex align-items-center">
+                                                    <span class="badge bg-primary me-3">Module @module.OrderIndex</span>
+                                                    <h5 class="mb-0 fw-bold">@module.Title</h5>
+                                                </div>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-light text-dark border-0" onclick="editModule('@module.Id', '@JavaScriptEncoder.Default.Encode(module.Title)', '@JavaScriptEncoder.Default.Encode(module.Description ?? "")', @module.OrderIndex)">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-light text-danger border-0" onclick="deleteModule('@module.Id')">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="card-body p-0 border-top bg-light bg-opacity-25">
+                                                <div class="lessons-container p-4">
+                                                    @foreach (var lesson in module.Lessons.OrderBy(l => l.OrderIndex))
+                                                    {
+                                                        <div class="lesson-item bg-white p-3 rounded shadow-sm mb-2 d-flex justify-content-between align-items-center border border-light">
+                                                            <div class="d-flex align-items-center">
+                                                                <i class="bi @(string.IsNullOrEmpty(lesson.VideoUrl) ? "bi-file-text" : "bi-play-circle") text-primary me-3"></i>
+                                                                <div>
+                                                                    <span class="small fw-bold d-block">Lesson @lesson.OrderIndex: @lesson.Title</span>
+                                                                    <span class="text-muted smaller">@lesson.Duration mins</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="btn-group">
+                                                                <button class="btn btn-sm btn-outline-light text-dark border-0" 
+                                                                        onclick="editLesson('@lesson.Id', '@module.Id', '@JavaScriptEncoder.Default.Encode(lesson.Title)', '@JavaScriptEncoder.Default.Encode(lesson.VideoUrl ?? "")', @lesson.OrderIndex)">
+                                                                    <i class="bi bi-pencil-square"></i>
+                                                                </button>
+                                                                <button class="btn btn-sm btn-outline-light text-danger border-0" onclick="deleteLesson('@lesson.Id')">
+                                                                    <i class="bi bi-x-lg"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                    <button class="btn btn-link text-decoration-none w-100 mt-2 py-2 border-dashed rounded hstack justify-content-center gap-2" 
+                                                            onclick="showLessonModal('@module.Id')">
+                                                        <i class="bi bi-plus-circle"></i>
+                                                        <span>Add Lesson</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Module Modal -->
+<div class="modal fade shadow-lg" id="moduleModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 p-4">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="moduleModalLabel">Add Module</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body py-4">
+                <input type="hidden" id="moduleId">
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Title</label>
+                    <input type="text" id="moduleTitle" class="form-control" placeholder="e.g. Introduction to C#">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Description (Optional)</label>
+                    <textarea id="moduleDescription" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Sort Order</label>
+                    <input type="number" id="moduleOrder" class="form-control" value="1">
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0 justify-content-between">
+                <button type="button" class="btn btn-link text-decoration-none text-muted" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4" onclick="saveModule()">Save Module</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Lesson Modal -->
+<div class="modal fade shadow-lg" id="lessonModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 p-4">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="lessonModalLabel">Add Lesson</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body py-4">
+                <input type="hidden" id="lessonId">
+                <input type="hidden" id="targetModuleId">
+                <div class="row g-3">
+                    <div class="col-md-9">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Lesson Title</label>
+                            <input type="text" id="lessonTitle" class="form-control" placeholder="e.g. Introduction to Variables">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                         <div class="mb-3">
+                            <label class="form-label small fw-bold">Sort Order</label>
+                            <input type="number" id="lessonOrder" class="form-control" value="1">
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Video URL (e.g. YouTube/Vimeo)</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0"><i class="bi bi-play-circle text-muted"></i></span>
+                        <input type="text" id="lessonVideoUrl" class="form-control border-start-0 ps-0" placeholder="https://...">
+                    </div>
+                </div>
+                <div class="mb-0">
+                    <label class="form-label small fw-bold">Content (Markdown or Plain Text)</label>
+                    <textarea id="lessonContent" class="form-control" rows="8" placeholder="Share lecture notes or detailed instructions..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0 justify-content-between">
+                <button type="button" class="btn btn-link text-decoration-none text-muted" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4" onclick="saveLesson()">Save Lesson</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const courseId = '@Model.CourseForm.Id';
+    const antiforgeryToken = '@(Html.AntiForgeryToken())';
+
+    // Module Handlers
+    function showModuleModal() {
+        document.getElementById('moduleId').value = '';
+        document.getElementById('moduleTitle').value = '';
+        document.getElementById('moduleDescription').value = '';
+        document.getElementById('moduleOrder').value = $('.module-card').length + 1;
+        document.getElementById('moduleModalLabel').innerText = 'Add Module';
+        new bootstrap.Modal(document.getElementById('moduleModal')).show();
+    }
+
+    function editModule(id, title, desc, order) {
+        document.getElementById('moduleId').value = id;
+        document.getElementById('moduleTitle').value = title;
+        document.getElementById('moduleDescription').value = desc;
+        document.getElementById('moduleOrder').value = order;
+        document.getElementById('moduleModalLabel').innerText = 'Edit Module';
+        new bootstrap.Modal(document.getElementById('moduleModal')).show();
+    }
+
+    async function saveModule() {
+        const id = document.getElementById('moduleId').value;
+        const title = document.getElementById('moduleTitle').value;
+        const description = document.getElementById('moduleDescription').value;
+        const orderIndex = parseInt(document.getElementById('moduleOrder').value);
+
+        if (!title) { alert('Title is required'); return; }
+
+        const url = id ? "?handler=UpdateModule" : "?handler=AddModule";
+        const body = id ? { id, title, description, orderIndex } : { courseId, title, description, orderIndex };
+
+        const saveBtn = event.target;
+        const originalText = saveBtn.innerText;
+        saveBtn.disabled = true;
+        saveBtn.innerText = 'Saving...';
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+                body: JSON.stringify(body)
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                if (id) {
+                    // Update existing module
+                    const card = document.querySelector(`.module-card[data-module-id="${id}"]`);
+                    if (card) {
+                        card.querySelector('h5').innerText = title;
+                        card.querySelector('.badge').innerText = `Module ${orderIndex}`;
+                    }
+                } else {
+                    // Add new module (simple way: reload or append)
+                    // For "Add", partial fetch is better to get the full structure, but let's try direct append for speed
+                    location.reload(); // Still reload for Add to get correct nesting/icons easily, or append
+                }
+                bootstrap.Modal.getInstance(document.getElementById('moduleModal')).hide();
+                showToast('success', 'Module saved successfully');
+            } else {
+                alert('Error saving module');
+            }
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerText = originalText;
+        }
+    }
+
+    async function deleteModule(id) {
+        if (!confirm('Are you sure you want to delete this module and all its lessons?')) return;
+        const response = await fetch(`?handler=DeleteModule&id=${id}`, {
+            method: 'POST',
+            headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() }
+        });
+        if (response.ok) { 
+            document.querySelector(`.module-card[data-module-id="${id}"]`)?.remove();
+            showToast('info', 'Module removed');
+        }
+    }
+
+    // Lesson Handlers
+    function showLessonModal(moduleId) {
+        document.getElementById('lessonId').value = '';
+        document.getElementById('targetModuleId').value = moduleId;
+        document.getElementById('lessonTitle').value = '';
+        document.getElementById('lessonVideoUrl').value = '';
+        document.getElementById('lessonContent').value = '';
+        document.getElementById('lessonOrder').value = 1;
+        document.getElementById('lessonModalLabel').innerText = 'Add Lesson';
+        new bootstrap.Modal(document.getElementById('lessonModal')).show();
+    }
+
+    function editLesson(id, moduleId, title, videoUrl, order) {
+        document.getElementById('lessonId').value = id;
+        document.getElementById('targetModuleId').value = moduleId;
+        document.getElementById('lessonTitle').value = title;
+        document.getElementById('lessonVideoUrl').value = videoUrl;
+        document.getElementById('lessonContent').value = ''; 
+        document.getElementById('lessonOrder').value = order;
+        document.getElementById('lessonModalLabel').innerText = 'Edit Lesson';
+        new bootstrap.Modal(document.getElementById('lessonModal')).show();
+    }
+
+    async function saveLesson() {
+        const id = document.getElementById('lessonId').value;
+        const moduleId = document.getElementById('targetModuleId').value;
+        const title = document.getElementById('lessonTitle').value;
+        const videoUrl = document.getElementById('lessonVideoUrl').value;
+        const content = document.getElementById('lessonContent').value || "No detailed content yet.";
+        const orderIndex = parseInt(document.getElementById('lessonOrder').value);
+
+        if (!title) { alert('Title is required'); return; }
+
+        const saveBtn = event.target;
+        saveBtn.disabled = true;
+        saveBtn.innerText = 'Saving...';
+
+        try {
+            const response = await fetch('?handler=UpsertLesson', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+                body: JSON.stringify({ id: id || "00000000-0000-0000-0000-000000000000", moduleId, title, content, videoUrl, orderIndex })
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                if (id && id !== "00000000-0000-0000-0000-000000000000") {
+                    // Update existing lesson UI
+                    const item = document.getElementById(`lesson-${id}`);
+                    if (item) {
+                        item.querySelector('.fw-bold').innerText = `Lesson ${orderIndex}: ${title}`;
+                        const icon = item.querySelector('i');
+                        icon.className = `bi ${videoUrl ? "bi-play-circle" : "bi-file-text"} text-primary me-3`;
+                    }
+                } else {
+                    location.reload(); 
+                }
+                bootstrap.Modal.getInstance(document.getElementById('lessonModal')).hide();
+                showToast('success', 'Lesson saved');
+            } else {
+                alert('Error saving lesson');
+            }
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerText = 'Save Lesson';
+        }
+    }
+
+    async function deleteLesson(id) {
+        if (!confirm('Delete this lesson?')) return;
+        const response = await fetch(`?handler=DeleteLesson&id=${id}`, {
+            method: 'POST',
+            headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() }
+        });
+        if (response.ok) { 
+            document.getElementById(`lesson-${id}`)?.remove();
+            showToast('info', 'Lesson removed');
+        }
+    }
+
+    function showToast(type, message) {
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type === 'success' ? 'success' : 'info'} position-fixed top-0 start-50 translate-middle-x mt-3 shadow-lg fade show`;
+        toast.style.zIndex = '1060';
+        toast.innerHTML = `<i class="bi bi-info-circle me-2"></i> ${message}`;
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 500); }, 3000);
+    }
+</script>
+}
+
+<style>
+    .border-dashed { border: 2px dashed #e9ecef; }
+    .border-dashed:hover { background-color: #f8f9fa; border-color: #dee2e6; }
+    .navbar-expand-lg .navbar-nav .nav-link { font-weight: 500; }
+    .nav-tabs .nav-link.active { border-bottom: 3px solid var(--bs-primary) !important; color: var(--bs-primary) !important; }
+    .nav-tabs .nav-link { color: #6c757d; border-radius: 0; }
+    .smaller { font-size: 0.75rem; }
+</style>

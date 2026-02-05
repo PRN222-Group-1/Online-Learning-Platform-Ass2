@@ -1,0 +1,62 @@
+@page "/User/Logout"
+@model OnlineLearningPlatformAss2.RazorWebApp.Pages.User.LogoutModel
+
+@{
+    ViewData["Title"] = "Logging Out - LearnHub";
+}
+
+<div class="logout-page">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="logout-card">
+                    <div class="text-center">
+                        <div class="logout-icon mb-4">
+                            <i class="bi bi-box-arrow-right"></i>
+                        </div>
+                        <h2>Logging you out...</h2>
+                        <p class="text-muted">Please wait while we securely log you out of your account.</p>
+                        <div class="spinner-border text-primary mt-3" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Auto-redirect after a brief delay for better UX
+    setTimeout(() => {
+        window.location.href = '/';
+    }, 2000);
+</script>
+
+<style>
+    .logout-page {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        padding: 40px 0;
+    }
+
+    .logout-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        padding: 60px 40px;
+        text-align: center;
+    }
+
+    .logout-icon {
+        font-size: 64px;
+        color: #0056d2;
+    }
+
+    .logout-card h2 {
+        color: #1a1a1a;
+        margin-bottom: 16px;
+    }
+</style>

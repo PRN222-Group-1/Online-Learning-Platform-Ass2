@@ -1,0 +1,317 @@
+@page
+@model OnlineLearningPlatformAss2.RazorWebApp.Pages.User.RegisterModel
+
+@{
+    ViewData["Title"] = "Join LearnHub - Start Learning Today";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+}
+
+<div class="auth-page">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="auth-card">
+                    <!-- Header -->
+                    <div class="auth-header text-center">
+                        <a asp-page="/Index" class="auth-logo mb-4 text-decoration-none">
+                            <i class="bi bi-mortarboard-fill"></i>
+                            <span>LearnHub</span>
+                        </a>
+                        <h1 class="auth-title">Start learning today</h1>
+                        <p class="auth-subtitle">Join millions of learners and transform your career</p>
+                    </div>
+
+                    <!-- Benefits -->
+                    <div class="benefits-box mb-4">
+                        <h6 class="benefits-title">
+                            <i class="bi bi-star-fill me-2"></i>What you'll get:
+                        </h6>
+                        <div class="benefits-list">
+                            <div class="benefit-item">
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span>Access to thousands of courses</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span>Personalized recommendations</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span>Industry-recognized certificates</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span>Learn at your own pace</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alerts -->
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success" role="alert">
+                            <i class="bi bi-check-circle-fill me-2"></i>
+                            @TempData["SuccessMessage"]
+                        </div>
+                    }
+
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            @TempData["ErrorMessage"]
+                        </div>
+                    }
+
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                    <!-- Social Registration -->
+                    <div class="social-login mb-3">
+                        <button type="button" class="btn btn-social btn-google mb-2">
+                            <svg width="18" height="18" viewBox="0 0 18 18" class="me-2">
+                                <path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18Z"/>
+                                <path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2.04a4.8 4.8 0 0 1-7.18-2.53H1.83v2.07A8 8 0 0 0 8.98 17Z"/>
+                                <path fill="#FBBC05" d="M4.5 10.49a4.8 4.8 0 0 1 0-3.07V5.35H1.83a8 8 0 0 0 0 7.28l2.67-2.14Z"/>
+                                <path fill="#EA4335" d="M8.98 4.72c1.16 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.35L4.5 7.42a4.77 4.77 0 0 1 4.48-2.7Z"/>
+                            </svg>
+                            Sign up with Google
+                        </button>
+                        
+                        <button type="button" class="btn btn-social btn-github">
+                            <i class="bi bi-github me-2"></i>
+                            Sign up with GitHub
+                        </button>
+                    </div>
+
+                    <!-- Divider -->
+                    <div class="divider">
+                        <span>or sign up with email</span>
+                    </div>
+
+                    <!-- Registration Form -->
+                    <form method="post" class="auth-form">
+                        <div class="form-group mb-3">
+                            <label asp-for="RegisterDto.Username" class="form-label">Username</label>
+                            <div class="input-with-icon">
+                                <i class="bi bi-person input-icon"></i>
+                                <input asp-for="RegisterDto.Username" 
+                                       class="form-control" 
+                                       placeholder="Choose a unique username"
+                                       autocomplete="username" />
+                            </div>
+                            <span asp-validation-for="RegisterDto.Username" class="text-danger small"></span>
+                            <small class="text-muted">3-20 characters, letters, numbers, and underscores only</small>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label asp-for="RegisterDto.Email" class="form-label">Email Address</label>
+                            <div class="input-with-icon">
+                                <i class="bi bi-envelope input-icon"></i>
+                                <input asp-for="RegisterDto.Email" 
+                                       type="email" 
+                                       class="form-control" 
+                                       placeholder="Enter your email address"
+                                       autocomplete="email" />
+                            </div>
+                            <span asp-validation-for="RegisterDto.Email" class="text-danger small"></span>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label asp-for="RegisterDto.Password" class="form-label">Password</label>
+                            <div class="input-with-icon">
+                                <i class="bi bi-lock input-icon"></i>
+                                <input asp-for="RegisterDto.Password" 
+                                       type="password" 
+                                       class="form-control" 
+                                       placeholder="Create a strong password"
+                                       autocomplete="new-password"
+                                       id="password-input" />
+                                <button type="button" class="password-toggle" id="toggle-password">
+                                    <i class="bi bi-eye" id="password-icon"></i>
+                                </button>
+                            </div>
+                            <span asp-validation-for="RegisterDto.Password" class="text-danger small"></span>
+                            
+                            <!-- Password Strength -->
+                            <div class="password-strength mt-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="flex-grow-1">
+                                        <div class="progress" style="height: 4px;">
+                                            <div class="progress-bar" id="strength-bar" style="width: 0%;"></div>
+                                        </div>
+                                    </div>
+                                    <small id="strength-text" class="text-muted">Use 8+ characters</small>
+                                </div>
+                                <small class="text-muted">Include uppercase, lowercase, numbers, and symbols</small>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group mb-4">
+                            <label asp-for="RegisterDto.ConfirmPassword" class="form-label">Confirm Password</label>
+                            <div class="input-with-icon">
+                                <i class="bi bi-shield-check input-icon"></i>
+                                <input asp-for="RegisterDto.ConfirmPassword" 
+                                       type="password" 
+                                       class="form-control" 
+                                       placeholder="Confirm your password"
+                                       autocomplete="new-password"
+                                       id="confirm-password" />
+                            </div>
+                            <span asp-validation-for="RegisterDto.ConfirmPassword" class="text-danger small"></span>
+                            <div id="password-match" class="mt-1" style="display: none;">
+                                <small class="text-success">
+                                    <i class="bi bi-check-circle-fill"></i> Passwords match
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- Terms -->
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="agreeTerms" name="agreeTerms" required />
+                            <label class="form-check-label" for="agreeTerms">
+                                I agree to LearnHub's 
+                                <a href="#" class="text-primary" data-bs-toggle="modal" data-bs-target="#termsModal">Terms of Service</a> 
+                                and <a asp-page="/Privacy" class="text-primary">Privacy Policy</a>
+                            </label>
+                        </div>
+
+                        <!-- Marketing -->
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" id="marketingEmails" name="marketingEmails" checked />
+                            <label class="form-check-label" for="marketingEmails">
+                                Send me course recommendations and learning tips
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success w-100 mb-4" id="register-btn">
+                            <i class="bi bi-person-plus me-2"></i>
+                            Join LearnHub for Free
+                        </button>
+                    </form>
+
+                    <!-- Footer -->
+                    <div class="auth-footer text-center">
+                        <p class="mb-3">
+                            Already have an account? 
+                            <a asp-page="/User/Login" class="text-primary fw-semibold">Sign in</a>
+                        </p>
+                        <div class="auth-links">
+                            <a asp-page="/Index" class="text-muted text-decoration-none me-3">
+                                <i class="bi bi-house me-1"></i>Back to Home
+                            </a>
+                            <a href="#" class="text-muted text-decoration-none">Help</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Terms Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Terms of Service</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="max-height: 400px; overflow-y: auto;">
+                <h6>1. Acceptance of Terms</h6>
+                <p class="text-muted small">By creating an account on LearnHub, you agree to these Terms of Service...</p>
+                
+                <h6>2. Account Registration</h6>
+                <p class="text-muted small">You must provide accurate information when registering...</p>
+                
+                <h6>3. Use of Services</h6>
+                <p class="text-muted small">Our platform is designed for educational purposes...</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="document.getElementById('agreeTerms').checked = true;">I Agree</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const passwordInput = document.getElementById('password-input');
+            const confirmPassword = document.getElementById('confirm-password');
+            const togglePassword = document.getElementById('toggle-password');
+            const passwordIcon = document.getElementById('password-icon');
+            const strengthBar = document.getElementById('strength-bar');
+            const strengthText = document.getElementById('strength-text');
+            const passwordMatch = document.getElementById('password-match');
+
+            // Password toggle
+            if (togglePassword) {
+                togglePassword.addEventListener('click', function() {
+                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordInput.setAttribute('type', type);
+                    passwordIcon.className = type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
+                });
+            }
+
+            // Password strength
+            if (passwordInput) {
+                passwordInput.addEventListener('input', function() {
+                    const password = this.value;
+                    let strength = 0;
+                    const checks = {
+                        length: password.length >= 8,
+                        uppercase: /[A-Z]/.test(password),
+                        lowercase: /[a-z]/.test(password),
+                        numbers: /\d/.test(password),
+                        special: /[^A-Za-z0-9]/.test(password)
+                    };
+
+                    strength = Object.values(checks).filter(Boolean).length;
+                    
+                    const colors = ['#dc3545', '#fd7e14', '#ffc107', '#20c997', '#28a745'];
+                    const messages = ['Very weak', 'Weak', 'Fair', 'Good', 'Strong'];
+                    
+                    const percentage = (strength / 5) * 100;
+                    strengthBar.style.width = percentage + '%';
+                    strengthBar.style.backgroundColor = colors[strength - 1] || '#e9ecef';
+                    
+                    if (strength === 0) {
+                        strengthText.textContent = 'Use 8+ characters';
+                    } else {
+                        strengthText.textContent = messages[strength - 1];
+                        strengthText.style.color = colors[strength - 1];
+                    }
+
+                    checkPasswordMatch();
+                });
+            }
+
+            // Password match
+            function checkPasswordMatch() {
+                if (confirmPassword.value && passwordInput.value) {
+                    const isMatch = confirmPassword.value === passwordInput.value;
+                    passwordMatch.style.display = isMatch ? 'block' : 'none';
+                }
+            }
+
+            if (confirmPassword) {
+                confirmPassword.addEventListener('input', checkPasswordMatch);
+            }
+
+            // Form submission
+            const registerForm = document.querySelector('.auth-form');
+            const registerBtn = document.getElementById('register-btn');
+
+            if (registerForm) {
+                registerForm.addEventListener('submit', function() {
+                    registerBtn.disabled = true;
+                    registerBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating account...';
+                });
+            }
+        });
+    </script>
+}

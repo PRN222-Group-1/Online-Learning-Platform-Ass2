@@ -5,7 +5,7 @@
 
 # dotenv files
 .env
-.agent/
+
 # User-specific files
 *.rsuser
 *.suo
@@ -478,3 +478,4 @@ $RECYCLE.BIN/
 appsettings.json
 **/appsettings.json
 /Online-Learning-Platform-Ass1.Web/appsettings.Development.json
+system_analysis.md

@@ -1,0 +1,106 @@
+<div id="chatbot-widget" class="position-fixed bottom-0 end-0 p-4" style="z-index: 1050;">
+    <!-- Toggle Button -->
+    <button id="chatbot-toggle" class="btn btn-primary rounded-circle shadow-lg p-3 d-flex align-items-center justify-content-center"
+            style="width: 60px; height: 60px; transition: transform 0.2s;">
+        <i class="bi bi-chat-dots-fill fs-3"></i>
+    </button>
+
+    <!-- Chat Window -->
+    <div id="chatbot-window" class="card shadow-lg mt-3 d-none" style="width: 350px; height: 500px; border-radius: 15px; overflow: hidden; display: flex; flex-direction: column;">
+        
+        <!-- Header -->
+        <div class="card-header bg-dark text-white d-flex align-items-center justify-content-between py-2">
+            <h5 class="mb-0 fs-6 text-truncate pe-2" id="chatbot-title" style="max-width: 180px;"><i class="bi bi-robot me-2"></i>Course Advisor</h5>
+            <div class="d-flex align-items-center flex-shrink-0">
+                <!-- New Chat -->
+                <button id="chatbot-new-btn" class="btn btn-sm btn-link text-white p-0 me-3" title="New Chat">
+                    <i class="bi bi-plus-lg fs-5"></i>
+                </button>
+                <!-- Close -->
+                <button id="chatbot-close" class="btn btn-sm btn-link text-white p-0" title="Close">
+                    <i class="bi bi-x-lg fs-5"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Body Container -->
+        <div class="position-relative flex-grow-1 bg-light" style="overflow: hidden;">
+            <div id="chatbot-view-messages" class="w-100 h-100 d-flex flex-column">
+                <div id="chatbot-messages" class="flex-grow-1 overflow-auto p-3">
+                    <!-- Messages will be injected here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer (Input) -->
+        <div id="chatbot-footer" class="card-footer bg-white border-top-0 p-2">
+            <div class="input-group">
+                <input type="text" id="chatbot-input" class="form-control border-0 bg-light" placeholder="Ask a question..." style="border-radius: 20px 0 0 20px;">
+                <button id="chatbot-send" class="btn btn-primary" style="border-radius: 0 20px 20px 0;">
+                    <i class="bi bi-send-fill"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Simple chatbot UI implementation
+        const toggleBtn = document.getElementById('chatbot-toggle');
+        const chatWindow = document.getElementById('chatbot-window');
+        const closeBtn = document.getElementById('chatbot-close');
+        const sendBtn = document.getElementById('chatbot-send');
+        const inputField = document.getElementById('chatbot-input');
+        const messagesContainer = document.getElementById('chatbot-messages');
+
+        toggleBtn.addEventListener('click', () => {
+            chatWindow.classList.toggle('d-none');
+            toggleBtn.classList.toggle('d-none');
+        });
+
+        closeBtn.addEventListener('click', () => {
+            chatWindow.classList.add('d-none');
+            toggleBtn.classList.remove('d-none');
+        });
+
+        function addMessage(text, sender) {
+            const isUser = sender === 'user';
+            const align = isUser ? 'justify-content-end' : 'justify-content-start';
+            const bg = isUser ? 'bg-primary text-white' : 'bg-white border';
+            const label = isUser ? 'You' : 'AI Advisor';
+            
+            const html = `
+                <div class="d-flex ${align} mb-3">
+                    <div class="${bg} p-2 rounded shadow-sm" style="max-width: 85%;">
+                        <small class="d-block mb-1" style="font-size: 0.75rem;">${label}</small>
+                        <span>${text}</span>
+                    </div>
+                </div>
+            `;
+            messagesContainer.insertAdjacentHTML('beforeend', html);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function sendMessage() {
+            const text = inputField.value.trim();
+            if (!text) return;
+
+            addMessage(text, 'user');
+            inputField.value = '';
+
+            // Simulate AI response
+            setTimeout(() => {
+                addMessage('Thank you for your question! This is a demo response.', 'ai');
+            }, 1000);
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        inputField.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // Add welcome message
+        addMessage('Hello! How can I help you today?', 'ai');
+    });
+</script>

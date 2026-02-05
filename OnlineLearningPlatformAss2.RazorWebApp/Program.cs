@@ -1,49 +1,64 @@
+using Microsoft.EntityFrameworkCore;
 using OnlineLearningPlatformAss2.Data.Database;
-using OnlineLearningPlatformAss2.Data.Database.Entities;
-using OnlineLearningPlatformAss2.Data.Repositories.Implementations;
-using OnlineLearningPlatformAss2.Data.Repositories.Interfaces;
-using OnlineLearningPlatformAss2.Service.Services.Implementations;
+using OnlineLearningPlatformAss2.Service.Services;
 using OnlineLearningPlatformAss2.Service.Services.Interfaces;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using OnlineLearningPlatformAss2.RazorWebApp.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<OnlineLearningPlatformAss2Context>(options =>
-    options.UseSqlServer(connectionString)
-        .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
 
-// Register repositories
-builder.Services.AddScoped<IBaseRepository<User>, BaseRepository<User>>();
-builder.Services.AddScoped<IBaseRepository<Profile>, BaseRepository<Profile>>();
-builder.Services.AddScoped<IBaseRepository<Role>, BaseRepository<Role>>();
-
-// Register services
-builder.Services.AddScoped<IUserService, UserService>();
-
-// Add session services
-builder.Services.AddSession(options =>
-{
-    options.IdleTimeout = TimeSpan.FromMinutes(30);
-    options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true;
-});
-
-// Configure Serilog
-builder.Host.UseSerilog((context, configuration) =>
-    configuration
-        .MinimumLevel.Information()
-        .WriteTo.Console()
-        .WriteTo.File(
-            "logs/app-.txt",
-            rollingInterval: RollingInterval.Day,
-            outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] {Message:lj}{NewLine}{Exception}"
-        )
-        .Enrich.FromLogContext()
-        .Enrich.WithProperty("Application", "OnlineLearningPlatform")
-);
-
+// Add services to the container.
 builder.Services.AddRazorPages();
 
+// Add Entity Framework with SQL Server or In-Memory Database
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrEmpty(connectionString) || connectionString.Contains("Memory", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Services.AddDbContext<OnlineLearningContext>(options =>
+        options.UseInMemoryDatabase("OnlineLearningPlatformDb"));
+}
+else
+{
+    builder.Services.AddDbContext<OnlineLearningContext>(options =>
+        options.UseSqlServer(connectionString, b => b.MigrationsAssembly("OnlineLearningPlatformAss2.Data")));
+}
+
+// Add Authentication
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/User/Login";
+        options.LogoutPath = "/User/Logout";
+        options.AccessDeniedPath = "/User/Login";
+        options.ExpireTimeSpan = TimeSpan.FromDays(30);
+        options.SlidingExpiration = true;
+    });
+
+// Register Services
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAssessmentService, AssessmentService>();
+builder.Services.AddScoped<ICourseService, CourseService>();
+builder.Services.AddScoped<ILearningPathService, LearningPathService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<IQuizService, QuizService>();
+builder.Services.AddScoped<IDiscussionService, DiscussionService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<DatabaseSeedService>();
+
+// Add SignalR
+builder.Services.AddSignalR();
+builder.Services.AddScoped<ICourseUpdateBroadcaster, OnlineLearningPlatformAss2.RazorWebApp.Services.SignalRCourseUpdateBroadcaster>();
+
 var app = builder.Build();
+
+// Seed the database
+using (var scope = app.Services.CreateScope())
+{
+    var seedService = scope.ServiceProvider.GetRequiredService<DatabaseSeedService>();
+    await seedService.SeedAsync();
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -53,15 +68,17 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
-// Add session middleware
-app.UseSession();
-app.MapStaticAssets();
-app.MapRazorPages()
-    .WithStaticAssets();
+app.MapRazorPages();
+
+// Map SignalR Hubs
+app.MapHub<CourseHub>("/hubs/course");
+app.MapHub<ChatHub>("/hubs/chat");
 
 app.Run();

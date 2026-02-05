@@ -1,0 +1,487 @@
+@page "/Course/Details/{id:guid}"
+@model OnlineLearningPlatformAss2.RazorWebApp.Pages.Course.DetailsModel
+
+@{
+    ViewData["Title"] = Model.Course?.Title ?? "Course Details";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/course-details.css" asp-append-version="true" />
+}
+
+@if (Model.Course != null)
+{
+    <!-- Course Hero Section -->
+    <section class="course-hero">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="course-hero-content">
+                        <nav aria-label="breadcrumb" class="course-breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a asp-page="/Index">Home</a></li>
+                                <li class="breadcrumb-item"><a asp-page="/Index" asp-route-category="@Model.Course.CategoryName">@Model.Course.CategoryName</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">@Model.Course.Title</li>
+                            </ol>
+                        </nav>
+
+                        <h1 class="course-title">@Model.Course.Title</h1>
+                        <p class="course-subtitle">@Model.Course.Description</p>
+
+                        <div class="course-meta">
+                            <div class="meta-item">
+                                <div class="rating-display">
+                                    <span class="rating-stars"><partial name="_StarRating" model="Model.Course.Rating" /></span>
+                                    <span class="rating-number">@Model.Course.Rating.ToString("F1")</span>
+                                    <span class="rating-count">(@Model.Course.ReviewCount.ToString("N0") reviews)</span>
+                                </div>
+                            </div>
+                            <div class="meta-item">
+                                <i class="bi bi-people"></i>
+                                <span>@Model.Course.StudentCount.ToString("N0") students</span>
+                            </div>
+                            <div class="meta-item">
+                                <i class="bi bi-person"></i>
+                                <span>Created by <strong>@Model.Course.InstructorName</strong></span>
+                            </div>
+                            <div class="meta-item">
+                                <i class="bi bi-translate"></i>
+                                <span>@Model.Course.Language</span>
+                            </div>
+                        </div>
+
+                        <div class="course-badges">
+                            <span class="badge badge-level">@Model.Course.Level</span>
+                            <span class="badge badge-category">@Model.Course.CategoryName</span>
+                            @if (Model.Course.HasCertificate)
+                            {
+                                <span class="badge badge-certificate">
+                                    <i class="bi bi-award"></i>
+                                    Certificate
+                                </span>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="course-preview-card">
+                        <div class="preview-image">
+                            @if (!string.IsNullOrEmpty(Model.Course.ImageUrl))
+                            {
+                                <img src="@Model.Course.ImageUrl" alt="@Model.Course.Title" class="img-fluid">
+                            }
+                            else
+                            {
+                                <div class="preview-placeholder">
+                                    <i class="bi bi-play-circle"></i>
+                                </div>
+                            }
+                            <div class="play-overlay">
+                                <button class="play-button" data-bs-toggle="modal" data-bs-target="#previewModal">
+                                    <i class="bi bi-play-fill"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="preview-content">
+                            <div class="price-section">
+                                <div class="current-price">@Model.Course.FormattedPrice</div>
+                                @if (Model.Course.Price > 0)
+                                {
+                                    <div class="original-price">$@((Model.Course.Price * 1.5m).ToString("F2"))</div>
+                                    <div class="discount-badge">33% off</div>
+                                }
+                            </div>
+
+                            @if (Model.IsEnrolled)
+                            {
+                                <div class="enrolled-section">
+                                    <div class="enrolled-badge">
+                                        <i class="bi bi-check-circle-fill"></i>
+                                        Enrolled
+                                    </div>
+                                    <a asp-page="/Course/Learn" asp-route-id="@Model.Course.Id" class="btn btn-success btn-lg w-100">
+                                        <i class="bi bi-play-circle me-2"></i>
+                                        Continue Learning
+                                    </a>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="enrollment-section" id="enrollmentSection">
+                                    @if (Model.IsAuthenticated)
+                                    {
+                                        <button type="button" class="btn btn-primary btn-lg w-100 mb-3" id="enrollBtn" onclick="enrollInCourse('@Model.Course.Id')">
+                                            <i class="bi bi-plus-circle me-2"></i>
+                                            <span id="enrollBtnText">Enroll Now</span>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <a asp-page="/User/Register" class="btn btn-primary btn-lg w-100 mb-3">
+                                            <i class="bi bi-plus-circle me-2"></i>
+                                            Enroll Now
+                                        </a>
+                                    }
+                                    <button class="btn btn-outline-secondary w-100 mb-3" id="wishlistBtn" onclick="toggleWishlist('@Model.Course.Id')">
+                                        <i class="bi @(Model.Course.IsInWishlist ? "bi-heart-fill" : "bi-heart") me-2" id="wishlistIcon"></i>
+                                        <span id="wishlistText">@(Model.Course.IsInWishlist ? "Remove from Wishlist" : "Add to Wishlist")</span>
+                                    </button>
+                                </div>
+                            }
+
+                            <div class="course-includes">
+                                <h6>This course includes:</h6>
+                                <ul class="includes-list">
+                                    <li><i class="bi bi-play-circle"></i> @Model.Course.FormattedDuration of on-demand video</li>
+                                    <li><i class="bi bi-file-earmark-text"></i> @Model.Course.TotalLessons lessons</li>
+                                    <li><i class="bi bi-download"></i> Downloadable resources</li>
+                                    @if (Model.Course.Level != "Advanced") 
+                                    {
+                                        <li><i class="bi bi-phone"></i> Access on mobile and TV</li>
+                                    }
+                                    <li><i class="bi bi-infinity"></i> Full lifetime access</li>
+                                    @if (Model.Course.HasCertificate)
+                                    {
+                                        <li><i class="bi bi-award"></i> Certificate of completion</li>
+                                    }
+                                </ul>
+                            </div>
+
+                            <div class="share-section">
+                                <h6>Share this course</h6>
+                                <div class="share-buttons">
+                                    <a href="https://www.facebook.com/sharer/sharer.php?u=@(HttpContext.Request.Scheme + "://" + HttpContext.Request.Host + HttpContext.Request.Path)" target="_blank" class="share-btn facebook">
+                                        <i class="bi bi-facebook"></i>
+                                    </a>
+                                    <a href="https://twitter.com/intent/tweet?url=@(HttpContext.Request.Scheme + "://" + HttpContext.Request.Host + HttpContext.Request.Path)" target="_blank" class="share-btn twitter">
+                                        <i class="bi bi-twitter"></i>
+                                    </a>
+                                    <a href="https://www.linkedin.com/sharing/share-offsite/?url=@(HttpContext.Request.Scheme + "://" + HttpContext.Request.Host + HttpContext.Request.Path)" target="_blank" class="share-btn linkedin">
+                                        <i class="bi bi-linkedin"></i>
+                                    </a>
+                                    <a href="javascript:void(0)" class="share-btn link" onclick="copyToClipboard()">
+                                        <i class="bi bi-link-45deg"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Course Content -->
+    <section class="course-content">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8">
+                    <!-- What you'll learn -->
+                    <div class="content-section">
+                        <h3>What you'll learn</h3>
+                        <div class="learning-objectives">
+                            <div class="row">
+                                @for (int i = 0; i < Model.Course.WhatYouWillLearn.Count; i++)
+                                {
+                                    <div class="col-md-6">
+                                        <div class="objective-item">
+                                            <i class="bi bi-check-circle-fill"></i>
+                                            <span>@Model.Course.WhatYouWillLearn[i]</span>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Student Feedback Section -->
+                    <div id="reviews" class="content-section mt-5">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h3 class="mb-0">Student Feedback</h3>
+                            <div class="rating-summary d-flex align-items-center gap-3">
+                                <div class="rating-huge h1 mb-0 text-primary fw-bold">@Model.Course.Rating.ToString("F1")</div>
+                                <div>
+                                    <div class="stars-large">
+                                        <partial name="_StarRating" model="Model.Course.Rating" />
+                                    </div>
+                                    <div class="small text-muted">Course Rating</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (Model.IsEnrolled)
+                        {
+                            <div class="review-form-container mb-5">
+                                <div class="card border-0 shadow-sm bg-light">
+                                    <div class="card-body p-4">
+                                        <h5 class="card-title mb-3">Add a Review</h5>
+                                        <form asp-page-handler="SubmitReview" method="post">
+                                            <input type="hidden" name="ReviewForm.CourseId" value="@Model.Course.Id" />
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-bold">How would you rate this course?</label>
+                                                <div class="star-rating-input">
+                                                    @for (int i = 5; i >= 1; i--)
+                                                    {
+                                                        <input type="radio" id="star@i" name="ReviewForm.Rating" value="@i" required />
+                                                        <label for="star@i" title="@i stars"><i class="bi bi-star-fill"></i></label>
+                                                    }
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-bold">Your Comments</label>
+                                                <textarea name="ReviewForm.Comment" class="form-control border-0 shadow-none" rows="3" placeholder="What did you think of the course content, instructor, and overall experience?"></textarea>
+                                            </div>
+                                            <div class="text-end">
+                                                <button type="submit" class="btn btn-primary px-4">Submit Review</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        <div class="reviews-list">
+                            @if (Model.Course.Reviews.Any())
+                            {
+                                @foreach (var review in Model.Course.Reviews)
+                                {
+                                    <div class="review-item py-4 border-bottom">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="reviewer-avatar rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center fw-bold" style="width: 48px; height: 48px;">
+                                                    @review.Username.Substring(0, 1).ToUpper()
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">@review.Username</h6>
+                                                    <div class="small">
+                                                        <partial name="_StarRating" model="(decimal)review.Rating" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <span class="small text-muted">@review.CreatedAt.ToString("MMM dd, yyyy")</span>
+                                        </div>
+                                        <p class="review-comment text-muted mb-0">@review.Comment</p>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="text-center py-5 bg-light rounded-3">
+                                    <i class="bi bi-chat-left-text text-muted h2 d-block mb-3"></i>
+                                    <p class="text-muted mb-0">No reviews yet. Be the first to share your learning experience!</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <!-- Related Courses Sidebar -->
+                    @if (Model.RelatedCourses.Any())
+                    {
+                        <div class="content-section">
+                            <h4 class="mb-4">More in @Model.Course.CategoryName</h4>
+                            <div class="related-courses-sidebar">
+                                @foreach (var course in Model.RelatedCourses)
+                                {
+                                    <div class="card mb-3 border-0 shadow-sm">
+                                        <div class="row g-0">
+                                            <div class="col-4">
+                                                <img src="@(course.ImageUrl ?? "https://via.placeholder.com/100")" class="img-fluid rounded-start h-100 object-fit-cover" alt="@course.Title">
+                                            </div>
+                                            <div class="col-8">
+                                                <div class="card-body p-2">
+                                                    <h6 class="card-title mb-1 small"><a asp-page="/Course/Details" asp-route-id="@course.Id" class="text-decoration-none text-dark">@course.Title</a></h6>
+                                                    <partial name="_StarRating" model="course.Rating" />
+                                                    <div class="fw-bold small text-primary">@course.FormattedPrice</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+}
+else
+{
+    <!-- Course not found -->
+    <section class="course-not-found">
+        <div class="container text-center py-5">
+            <h2>Course Not Found</h2>
+            <p>The course you're looking for doesn't exist or has been removed.</p>
+            <a asp-page="/Index" class="btn btn-primary">Browse All Courses</a>
+        </div>
+    </section>
+}
+
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Course Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="ratio ratio-16x9">
+                    <video controls poster="@Model.Course?.ImageUrl">
+                        <source src="#" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Copy course URL to clipboard
+        function copyToClipboard() {
+            navigator.clipboard.writeText(window.location.href).then(function() {
+                const btn = document.querySelector('.share-btn.link');
+                const originalIcon = btn.innerHTML;
+                btn.innerHTML = '<i class="bi bi-check"></i>';
+                setTimeout(() => {
+                    btn.innerHTML = originalIcon;
+                }, 2000);
+            });
+        }
+
+        // AJAX Enrollment
+        async function enrollInCourse(courseId) {
+            const enrollBtn = document.getElementById('enrollBtn');
+            const enrollBtnText = document.getElementById('enrollBtnText');
+            const isFree = '@(Model.Course.Price == 0)'.toLowerCase() === 'true';
+
+            if (isFree) {
+                if (enrollBtn) {
+                    enrollBtn.disabled = true;
+                    if (enrollBtnText) enrollBtnText.innerText = 'Enrolling...';
+                }
+
+                try {
+                    const response = await fetch('?handler=Enroll', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                        },
+                        body: JSON.stringify({ courseId: courseId })
+                    });
+
+                    const result = await response.json();
+                    if (result.success) {
+                        showToast('success', 'Successfully enrolled! Redirecting to course...');
+                        setTimeout(() => {
+                            window.location.href = result.learnUrl;
+                        }, 1000);
+                    } else {
+                        if (result.requiresLogin) {
+                            window.location.href = '/User/Login';
+                        } else {
+                            showToast('error', result.message);
+                            if (enrollBtn) {
+                                enrollBtn.disabled = false;
+                                if (enrollBtnText) enrollBtnText.innerText = 'Enroll Now';
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('Enrollment error:', error);
+                    window.location.href = `/Order/Checkout?id=${courseId}&type=Course`;
+                }
+            } else {
+                window.location.href = `/Order/Checkout?id=${courseId}&type=Course`;
+            }
+        }
+
+        // Toggle wishlist (AJAX)
+        async function toggleWishlist(courseId) {
+            const wishlistBtn = document.getElementById('wishlistBtn');
+            const wishlistIcon = document.getElementById('wishlistIcon');
+            const wishlistText = document.getElementById('wishlistText');
+
+            // Toggle state
+            const isInWishlist = wishlistIcon.classList.contains('bi-heart-fill');
+            
+            if (isInWishlist) {
+                wishlistIcon.classList.remove('bi-heart-fill');
+                wishlistIcon.classList.add('bi-heart');
+                wishlistText.textContent = 'Add to Wishlist';
+                showToast('info', 'Removed from wishlist');
+
+                // AJAX request to remove from wishlist
+                await updateWishlist(courseId, 'remove');
+            } else {
+                wishlistIcon.classList.remove('bi-heart');
+                wishlistIcon.classList.add('bi-heart-fill');
+                wishlistText.textContent = 'Remove from Wishlist';
+                showToast('success', 'Added to wishlist');
+
+                // AJAX request to add to wishlist
+                await updateWishlist(courseId, 'add');
+            }
+        }
+
+        // Function to update wishlist status via AJAX
+        async function updateWishlist(courseId, action) {
+            try {
+                const response = await fetch('?handler=ToggleWishlist', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    },
+                    body: JSON.stringify({ courseId: courseId, action: action })
+                });
+
+                const result = await response.json();
+
+                if (!result.success) {
+                    showToast('error', result.message);
+                }
+            } catch (error) {
+                console.error('Wishlist update error:', error);
+            }
+        }
+
+        // Toast notification helper
+        function showToast(type, message) {
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
+            toast.style.zIndex = '9999';
+            toast.innerHTML = `
+                <i class="bi bi-${type === 'success' ? 'check-circle-fill' : type === 'error' ? 'exclamation-triangle-fill' : 'info-circle-fill'} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            document.body.appendChild(toast);
+
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 150);
+            }, 3000);
+        }
+
+        // Smooth scroll for internal links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+}

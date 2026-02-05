@@ -1,0 +1,147 @@
+@* Chat Widget Partial - Include in _Layout.cshtml *@
+<div id="chatWidget" class="chat-widget position-fixed bottom-0 end-0 m-4" style="z-index: 9999;">
+    <!-- Toggle Button -->
+    <button id="chatToggle" class="btn btn-primary rounded-circle shadow-lg" style="width: 60px; height: 60px;">
+        <i class="bi bi-chat-dots-fill fs-4"></i>
+    </button>
+
+    <!-- Chat Panel -->
+    <div id="chatPanel" class="card shadow-lg d-none" style="width: 350px; max-height: 500px; border-radius: 16px;">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3" style="border-radius: 16px 16px 0 0;">
+            <div>
+                <h6 class="mb-0 fw-bold"><i class="bi bi-headset me-2"></i>Support Chat</h6>
+                <small id="chatStatus" class="opacity-75">Connecting...</small>
+            </div>
+            <button id="chatClose" class="btn btn-link text-white p-0"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="card-body p-0" style="height: 300px; overflow-y: auto;" id="chatMessages">
+            <div class="p-3 text-center text-muted">
+                <p class="mb-2">How can we help you today?</p>
+                <button id="requestHumanBtn" class="btn btn-outline-primary btn-sm rounded-pill">
+                    <i class="bi bi-person-fill me-1"></i>Talk to Human
+                </button>
+            </div>
+        </div>
+        <div class="card-footer p-2 bg-light" style="border-radius: 0 0 16px 16px;">
+            <div class="input-group">
+                <input type="text" id="chatInput" class="form-control border-0 bg-white" placeholder="Type a message..." disabled>
+                <button id="chatSend" class="btn btn-primary" disabled>
+                    <i class="bi bi-send-fill"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.chat-widget .card { animation: slideUp 0.3s ease; }
+@@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+.chat-message { padding: 8px 12px; border-radius: 12px; max-width: 80%; margin: 4px 12px; }
+.chat-message.user { background: #e3f2fd; margin-left: auto; }
+.chat-message.admin { background: #f5f5f5; }
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const chatToggle = document.getElementById('chatToggle');
+    const chatPanel = document.getElementById('chatPanel');
+    const chatClose = document.getElementById('chatClose');
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    const chatSend = document.getElementById('chatSend');
+    const chatStatus = document.getElementById('chatStatus');
+    const requestHumanBtn = document.getElementById('requestHumanBtn');
+
+    let connection = null;
+    let isConnected = false;
+
+    // Toggle chat panel
+    chatToggle.addEventListener('click', () => {
+        chatPanel.classList.toggle('d-none');
+        if (!connection) initSignalR();
+    });
+    chatClose.addEventListener('click', () => chatPanel.classList.add('d-none'));
+
+    function initSignalR() {
+        connection = new signalR.HubConnectionBuilder()
+            .withUrl("/hubs/chat")
+            .withAutomaticReconnect()
+            .build();
+
+        connection.on("ReceiveMessage", (from, message, sentAt) => {
+            appendMessage(from, message, 'admin');
+        });
+
+        connection.on("AdminJoined", (adminName) => {
+            chatStatus.textContent = `Connected with ${adminName}`;
+            chatInput.disabled = false;
+            chatSend.disabled = false;
+            appendSystemMessage(`${adminName} has joined the chat.`);
+        });
+
+        connection.on("SupportEnded", () => {
+            chatStatus.textContent = 'Chat ended';
+            chatInput.disabled = true;
+            chatSend.disabled = true;
+            appendSystemMessage("Support session ended.");
+        });
+
+        connection.start()
+            .then(() => {
+                isConnected = true;
+                chatStatus.textContent = 'Online';
+            })
+            .catch(err => {
+                chatStatus.textContent = 'Connection failed';
+                console.error("Chat SignalR error:", err);
+            });
+    }
+
+    // Request human support
+    requestHumanBtn?.addEventListener('click', () => {
+        if (connection && isConnected) {
+            connection.invoke("RequestLiveSupport")
+                .then(() => {
+                    chatStatus.textContent = 'Waiting for agent...';
+                    requestHumanBtn.disabled = true;
+                    requestHumanBtn.textContent = 'Waiting...';
+                });
+        }
+    });
+
+    // Send message
+    chatSend.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+
+    function sendMessage() {
+        const msg = chatInput.value.trim();
+        if (!msg || !connection || !isConnected) return;
+
+        connection.invoke("SendMessageToAdmin", msg)
+            .then(() => {
+                appendMessage('You', msg, 'user');
+                chatInput.value = '';
+            });
+    }
+
+    function appendMessage(from, text, type) {
+        const div = document.createElement('div');
+        div.className = `chat-message ${type}`;
+        div.innerHTML = `<small class="text-muted d-block" style="font-size:0.7rem;">${from}</small>${text}`;
+        chatMessages.appendChild(div);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function appendSystemMessage(text) {
+        const div = document.createElement('div');
+        div.className = 'text-center text-muted small py-2';
+        div.textContent = text;
+        chatMessages.appendChild(div);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+});
+</script>

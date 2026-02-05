@@ -1,12 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Diagnostics;
+using OnlineLearningPlatformAss2.RazorWebApp.Models;
 
 namespace OnlineLearningPlatformAss2.RazorWebApp.Pages;
 
-public class PrivacyModel(ILogger<PrivacyModel> logger) : PageModel
+public class PrivacyModel : PageModel
 {
-    private readonly ILogger<PrivacyModel> _logger = logger;
-
     public void OnGet()
     {
     }

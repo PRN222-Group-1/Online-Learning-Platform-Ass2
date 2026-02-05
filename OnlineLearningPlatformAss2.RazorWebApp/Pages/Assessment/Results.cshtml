@@ -1,0 +1,485 @@
+@page "/Assessment/Results"
+@model OnlineLearningPlatformAss2.RazorWebApp.Pages.Assessment.ResultsModel
+
+@{
+    ViewData["Title"] = "Your Learning Path - LearnHub";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/assessment.css" asp-append-version="true" />
+}
+
+<div class="results-page">
+    <div class="container">
+        @if (Model.Assessment != null)
+        {
+            <!-- Results Header -->
+            <div class="results-header">
+                <div class="success-badge mb-4">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Assessment Complete!</span>
+                </div>
+                <h1 class="results-title">Your Personalized Learning Path</h1>
+                <p class="results-subtitle">
+                    Based on your responses, we've curated the perfect courses to help you achieve your goals.
+                </p>
+            </div>
+
+            <!-- Assessment Summary -->
+            <div class="skill-summary">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <h3 class="mb-3">Your Learning Profile</h3>
+                        <p class="lead mb-4">@Model.Assessment.Summary</p>
+                        
+                        @if (Model.Assessment.SkillLevels.Any())
+                        {
+                            <h5>Skill Levels</h5>
+                            <div class="skills-grid">
+                                @foreach (var skill in Model.Assessment.SkillLevels)
+                                {
+                                    <div class="skill-item">
+                                        <span class="skill-name">@skill.Key</span>
+                                        <span class="skill-badge skill-@skill.Value.ToLower()">@skill.Value</span>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        
+                        @if (Model.Assessment.RecommendedCategories.Any())
+                        {
+                            <h5 class="mt-4">Recommended Areas</h5>
+                            <div class="categories-list">
+                                @foreach (var category in Model.Assessment.RecommendedCategories)
+                                {
+                                    <span class="category-tag">@category</span>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <div class="col-lg-4 text-center">
+                        <div class="assessment-badge">
+                            <div class="badge-icon">
+                                <i class="bi bi-trophy-fill"></i>
+                            </div>
+                            <h4>Assessment Completed</h4>
+                            <p class="text-muted">@Model.Assessment.CompletedAt.ToString("MMMM dd, yyyy")</p>
+                            <button class="btn btn-outline-primary btn-sm" onclick="window.print()">
+                                <i class="bi bi-download me-2"></i>
+                                Download Results
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Course Recommendations -->
+            <div class="recommendations-section">
+                <div class="section-header">
+                    <h2>Recommended Courses for You</h2>
+                    <p>Start with these handpicked courses that match your profile and goals.</p>
+                </div>
+
+                @if (Model.Recommendations.Any())
+                {
+                    <div class="recommendations-grid">
+                        @foreach (var course in Model.Recommendations)
+                        {
+                            <div class="recommendation-card">
+                                <div class="course-image">
+                                    @if (!string.IsNullOrEmpty(course.ImageUrl))
+                                    {
+                                        <img src="@course.ImageUrl" alt="@course.Title" />
+                                    }
+                                    else
+                                    {
+                                        <div class="course-placeholder">
+                                            <i class="bi bi-play-circle"></i>
+                                        </div>
+                                    }
+                                    <div class="match-score">
+                                        <span>@course.MatchScore% Match</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="course-content">
+                                    <div class="course-category">@course.Category</div>
+                                    <h4 class="course-title">
+                                        <a asp-page="/Course/Details" asp-route-id="@course.CourseId">
+                                            @course.Title
+                                        </a>
+                                    </h4>
+                                    <p class="course-description">@course.Description</p>
+                                    
+                                    <div class="course-meta">
+                                        <div class="instructor">
+                                            <i class="bi bi-person"></i>
+                                            <span>@course.InstructorName</span>
+                                        </div>
+                                        <div class="level">
+                                            <i class="bi bi-bar-chart"></i>
+                                            <span>@course.Level</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="match-reason">
+                                        <i class="bi bi-lightbulb"></i>
+                                        <span>@course.MatchReason</span>
+                                    </div>
+                                    
+                                    <div class="course-footer">
+                                        <div class="price">@course.Price.ToString("C")</div>
+                                        <a asp-page="/Course/Details" asp-route-id="@course.CourseId" class="btn btn-primary">
+                                            View Course
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="no-recommendations">
+                        <div class="empty-state">
+                            <i class="bi bi-search"></i>
+                            <h4>No Specific Recommendations</h4>
+                            <p>We're still building our course catalog. Browse our available courses to find something that interests you.</p>
+                            <a asp-page="/Index" class="btn btn-primary">Browse All Courses</a>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Next Steps -->
+            <div class="next-steps-section">
+                <div class="next-steps-card">
+                    <h3>What's Next?</h3>
+                    <div class="steps-grid">
+                        <div class="step-item">
+                            <div class="step-icon">
+                                <i class="bi bi-1-circle-fill"></i>
+                            </div>
+                            <div class="step-content">
+                                <h5>Choose Your First Course</h5>
+                                <p>Start with any recommended course that interests you most.</p>
+                            </div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-icon">
+                                <i class="bi bi-2-circle-fill"></i>
+                            </div>
+                            <div class="step-content">
+                                <h5>Set Your Learning Schedule</h5>
+                                <p>Dedicate regular time to learning for the best results.</p>
+                            </div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-icon">
+                                <i class="bi bi-3-circle-fill"></i>
+                            </div>
+                            <div class="step-content">
+                                <h5>Track Your Progress</h5>
+                                <p>Monitor your learning journey and celebrate milestones.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="cta-buttons">
+                        <a asp-page="/Index" class="btn btn-primary btn-lg">
+                            Start Learning Now
+                        </a>
+                        <a asp-page="/Assessment/Questions" class="btn btn-outline-secondary">
+                            Retake Assessment
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- Error State -->
+            <div class="error-state">
+                <div class="empty-state">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <h3>Results Not Found</h3>
+                    <p>We couldn't find your assessment results. Please try taking the assessment again.</p>
+                    <a asp-page="/Assessment/Start" class="btn btn-primary">Start Assessment</a>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    /* Additional styles for Results page */
+    .success-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #d1fae5;
+        color: #065f46;
+        padding: 12px 24px;
+        border-radius: 24px;
+        font-weight: 600;
+        font-size: 16px;
+    }
+
+    .success-badge i {
+        font-size: 20px;
+    }
+
+    .skills-grid {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        margin-bottom: 24px;
+    }
+
+    .skill-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        background: #f8fafc;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+    }
+
+    .skill-name {
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .categories-list {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .category-tag {
+        background: #e0f2fe;
+        color: #0277bd;
+        padding: 6px 16px;
+        border-radius: 16px;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .assessment-badge {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 24px;
+        border: 1px solid #e5e7eb;
+    }
+
+    .badge-icon {
+        width: 64px;
+        height: 64px;
+        background: linear-gradient(135deg, #fbbf24, #f59e0b);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 16px;
+        color: white;
+        font-size: 28px;
+    }
+
+    .recommendations-section {
+        margin: 48px 0;
+    }
+
+    .section-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .section-header h2 {
+        font-size: 32px;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 12px;
+    }
+
+    .section-header p {
+        font-size: 18px;
+        color: #666666;
+    }
+
+    .course-image {
+        position: relative;
+        aspect-ratio: 16 / 9;
+        overflow: hidden;
+    }
+
+    .course-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .course-placeholder {
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 32px;
+    }
+
+    .match-score {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: #16a34a;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .course-content {
+        padding: 20px;
+    }
+
+    .course-category {
+        color: #0056d2;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+    }
+
+    .course-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 12px;
+    }
+
+    .course-title a {
+        color: #1a1a1a;
+        text-decoration: none;
+    }
+
+    .course-title a:hover {
+        color: #0056d2;
+    }
+
+    .course-description {
+        color: #6b7280;
+        font-size: 14px;
+        margin-bottom: 16px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .course-meta {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 12px;
+        font-size: 12px;
+        color: #6b7280;
+    }
+
+    .course-meta > div {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .match-reason {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #fef3c7;
+        color: #92400e;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        margin-bottom: 16px;
+    }
+
+    .course-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .price {
+        font-size: 18px;
+        font-weight: 700;
+        color: #1a1a1a;
+    }
+
+    .next-steps-section {
+        margin-top: 48px;
+    }
+
+    .next-steps-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        padding: 40px;
+        text-align: center;
+    }
+
+    .next-steps-card h3 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 32px;
+    }
+
+    .steps-grid {
+        display: grid;
+        gap: 32px;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        margin-bottom: 40px;
+    }
+
+    .step-item {
+        text-align: center;
+    }
+
+    .step-icon {
+        font-size: 48px;
+        color: #0056d2;
+        margin-bottom: 16px;
+    }
+
+    .step-content h5 {
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .step-content p {
+        color: #6b7280;
+        font-size: 14px;
+    }
+
+    .cta-buttons {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .no-recommendations,
+    .error-state {
+        padding: 60px 20px;
+        text-align: center;
+    }
+
+    .no-recommendations .empty-state i,
+    .error-state .empty-state i {
+        font-size: 64px;
+        color: #9ca3af;
+        margin-bottom: 24px;
+    }
+</style>

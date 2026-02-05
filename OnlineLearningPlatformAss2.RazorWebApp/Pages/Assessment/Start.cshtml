@@ -1,0 +1,94 @@
+@page "/Assessment/Start"
+@model OnlineLearningPlatformAss2.RazorWebApp.Pages.Assessment.StartModel
+
+@{
+    ViewData["Title"] = "Skill Assessment";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Header -->
+        <div class="text-center mb-5">
+            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 mb-3" style="font-size: 0.875rem;">
+                <i class="bi bi-stars me-1"></i> Personalized Learning
+            </span>
+            <h1 class="display-5 fw-bold mb-3">Discover Your Perfect Learning Path</h1>
+            <p class="lead text-muted">
+                Answer a few quick questions and we'll create a customized curriculum just for you.
+            </p>
+        </div>
+
+        @if (TempData["WelcomeMessage"] != null)
+        {
+            <div class="alert alert-success border-0 shadow-sm mb-4">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-check-circle-fill me-3 fs-4"></i>
+                    <div>@TempData["WelcomeMessage"]</div>
+                </div>
+            </div>
+        }
+
+        @if (TempData["InfoMessage"] != null)
+        {
+            <div class="alert alert-info border-0 shadow-sm mb-4">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-info-circle-fill me-3 fs-4"></i>
+                    <div>@TempData["InfoMessage"]</div>
+                </div>
+            </div>
+        }
+
+        <!-- Main Card -->
+        <div class="card border-0 shadow-sm" style="border-radius: 16px;">
+            <div class="card-body p-5">
+                <!-- Features -->
+                <div class="row g-4 mb-5">
+                    <div class="col-md-4 text-center">
+                        <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" 
+                             style="width: 64px; height: 64px;">
+                            <i class="bi bi-clock text-primary fs-4"></i>
+                        </div>
+                        <h6 class="fw-bold">Quick Assessment</h6>
+                        <p class="text-muted small mb-0">Takes only 2-3 minutes</p>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" 
+                             style="width: 64px; height: 64px;">
+                            <i class="bi bi-person-check text-success fs-4"></i>
+                        </div>
+                        <h6 class="fw-bold">Personalized Results</h6>
+                        <p class="text-muted small mb-0">Tailored to your goals</p>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="rounded-circle bg-info bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" 
+                             style="width: 64px; height: 64px;">
+                            <i class="bi bi-lightning text-info fs-4"></i>
+                        </div>
+                        <h6 class="fw-bold">Instant Recommendations</h6>
+                        <p class="text-muted small mb-0">Start learning immediately</p>
+                    </div>
+                </div>
+
+                <!-- CTA -->
+                <div class="text-center">
+                    <a asp-page="/Assessment/Questions" class="btn btn-primary btn-lg px-5 py-3" 
+                       style="background: #0056d2; border: none; border-radius: 8px;">
+                        Start Assessment
+                        <i class="bi bi-arrow-right ms-2"></i>
+                    </a>
+                    <p class="text-muted small mt-3 mb-0">
+                        <i class="bi bi-shield-check me-1"></i>
+                        Your answers are used only to personalize your experience
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Skip Option -->
+        <div class="text-center mt-4">
+            <a asp-page="/Index" class="text-muted text-decoration-none">
+                Skip for now <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+</div>

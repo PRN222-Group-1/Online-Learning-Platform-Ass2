@@ -1,0 +1,296 @@
+@page "/Assessment/Questions"
+@model OnlineLearningPlatformAss2.RazorWebApp.Pages.Assessment.QuestionsModel
+
+@{
+    ViewData["Title"] = "Skill Assessment Questions - LearnHub";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/assessment.css" asp-append-version="true" />
+}
+
+<div class="assessment-page">
+    <div class="container">
+        <!-- Progress Header -->
+        <div class="assessment-header">
+            <div class="progress-section">
+                <div class="progress-info">
+                    <span class="step-indicator">Step 1 of 2</span>
+                    <h1 class="assessment-title">Tell us about yourself</h1>
+                    <p class="assessment-subtitle">Help us understand your background and learning goals</p>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" style="width: 50%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assessment Form -->
+        <div class="assessment-content">
+            <form method="post" id="assessmentForm">
+                <div class="questions-container">
+                    @if (Model.Questions.Any())
+                    {
+                        @for (int i = 0; i < Model.Questions.Count; i++)
+                        {
+                            var question = Model.Questions[i];
+                            <div class="question-card" data-question="@(i + 1)">
+                                <div class="question-header">
+                                    <span class="question-number">@(i + 1)</span>
+                                    <h3 class="question-text">@question.QuestionText</h3>
+                                </div>
+                                
+                                <div class="options-container">
+                                    @foreach (var option in question.Options)
+                                    {
+                                        <label class="option-card">
+                                            <input type="radio" 
+                                                   name="Answers[@question.Id]" 
+                                                   value="@option.Id"
+                                                   class="option-input" 
+                                                   required />
+                                            <div class="option-content">
+                                                <div class="option-text">@option.OptionText</div>
+                                                @if (!string.IsNullOrEmpty(option.SkillLevel) && option.SkillLevel != "None")
+                                                {
+                                                    <div class="skill-level">
+                                                        <span class="skill-badge skill-@option.SkillLevel.ToLower()">
+                                                            @option.SkillLevel
+                                                        </span>
+                                                    </div>
+                                                }
+                                            </div>
+                                            <div class="option-check">
+                                                <i class="bi bi-check-circle-fill"></i>
+                                            </div>
+                                        </label>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="no-questions">
+                            <div class="empty-state">
+                                <i class="bi bi-exclamation-circle"></i>
+                                <h3>Assessment Temporarily Unavailable</h3>
+                                <p>We're updating our assessment questions. Please try again later.</p>
+                                <a asp-page="/Index" class="btn btn-primary">Browse Courses Instead</a>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                @if (Model.Questions.Any())
+                {
+                    <!-- Navigation -->
+                    <div class="assessment-navigation">
+                        <div class="nav-buttons">
+                            <button type="button" class="btn btn-secondary" id="prevBtn" style="display: none;">
+                                <i class="bi bi-chevron-left me-2"></i>
+                                Previous
+                            </button>
+                            <a asp-page="/Index" class="btn btn-outline-danger ms-2" id="exitBtn">
+                                <i class="bi bi-x-circle me-2"></i>
+                                Exit
+                            </a>
+                            
+                            <div class="nav-spacer"></div>
+                            
+                            <button type="button" class="btn btn-primary" id="nextBtn">
+                                Next
+                                <i class="bi bi-chevron-right ms-2"></i>
+                            </button>
+                            
+                            <button type="submit" class="btn btn-success" id="submitBtn" style="display: none;">
+                                <i class="bi bi-check-circle me-2"></i>
+                                Complete Assessment
+                            </button>
+                        </div>
+                        
+                        <div class="question-indicators">
+                            @for (int i = 1; i <= Model.Questions.Count; i++)
+                            {
+                                <span class="indicator @(i == 1 ? "active" : "")" data-question="@i">@i</span>
+                            }
+                        </div>
+                    </div>
+                }
+            </form>
+        </div>
+
+        <!-- Help Section -->
+        <div class="assessment-help">
+            <div class="help-card">
+                <h4>Need Help?</h4>
+                <ul>
+                    <li>Answer honestly for the best course recommendations</li>
+                    <li>You can retake this assessment anytime</li>
+                    <li>Skip questions you're unsure about</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const questions = document.querySelectorAll('.question-card');
+            const indicators = document.querySelectorAll('.indicator');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const submitBtn = document.getElementById('submitBtn');
+            const progressBar = document.querySelector('.progress-bar');
+            
+            let currentQuestion = 0;
+            const totalQuestions = questions.length;
+
+            // Initialize
+            showQuestion(0);
+
+            // Navigation handlers
+            if (prevBtn) {
+                prevBtn.addEventListener('click', () => {
+                    if (currentQuestion > 0) {
+                        showQuestion(currentQuestion - 1);
+                    }
+                });
+            }
+
+            if (nextBtn) {
+                nextBtn.addEventListener('click', () => {
+                    if (validateCurrentQuestion()) {
+                        if (currentQuestion < totalQuestions - 1) {
+                            showQuestion(currentQuestion + 1);
+                        }
+                    } else {
+                        showError('Please select an answer before continuing.');
+                    }
+                });
+            }
+
+            // Form submission
+            const form = document.getElementById('assessmentForm');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    if (!validateAllQuestions()) {
+                        e.preventDefault();
+                        showError('Please answer all questions before submitting.');
+                        return;
+                    }
+                    
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+                });
+            }
+
+            // Option selection handlers
+            questions.forEach((question, index) => {
+                const options = question.querySelectorAll('input[type="radio"]');
+                options.forEach(option => {
+                    option.addEventListener('change', function() {
+                        updateIndicator(index + 1, true);
+                        updateProgress();
+                        
+                        // Auto-advance on selection (with slight delay)
+                        setTimeout(() => {
+                            if (currentQuestion === index && currentQuestion < totalQuestions - 1) {
+                                showQuestion(currentQuestion + 1);
+                            }
+                        }, 500);
+                    });
+                });
+            });
+
+            function showQuestion(index) {
+                // Hide all questions
+                questions.forEach(q => q.classList.remove('active'));
+                indicators.forEach(i => i.classList.remove('active'));
+                
+                // Show current question
+                if (questions[index]) {
+                    questions[index].classList.add('active');
+                    indicators[index].classList.add('active');
+                    currentQuestion = index;
+                    
+                    // Update navigation
+                    prevBtn.style.display = index === 0 ? 'none' : 'inline-flex';
+                    
+                    if (index === totalQuestions - 1) {
+                        nextBtn.style.display = 'none';
+                        submitBtn.style.display = 'inline-flex';
+                    } else {
+                        nextBtn.style.display = 'inline-flex';
+                        submitBtn.style.display = 'none';
+                    }
+                    
+                    // Update progress
+                    updateProgress();
+                    
+                    // No scroll to top to prevent jumping
+                    // window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            }
+
+            function validateCurrentQuestion() {
+                const currentQuestionEl = questions[currentQuestion];
+                const selectedOption = currentQuestionEl.querySelector('input[type="radio"]:checked');
+                return selectedOption !== null;
+            }
+
+            function validateAllQuestions() {
+                for (let i = 0; i < questions.length; i++) {
+                    const question = questions[i];
+                    const selectedOption = question.querySelector('input[type="radio"]:checked');
+                    if (!selectedOption) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            function updateIndicator(questionNumber, answered) {
+                const indicator = document.querySelector(`.indicator[data-question="${questionNumber}"]`);
+                if (indicator) {
+                    if (answered) {
+                        indicator.classList.add('completed');
+                    } else {
+                        indicator.classList.remove('completed');
+                    }
+                }
+            }
+
+            function updateProgress() {
+                const answeredQuestions = document.querySelectorAll('.question-card input[type="radio"]:checked').length;
+                const progressPercentage = Math.floor(((currentQuestion + 1) / totalQuestions) * 50) + 50; // 50-100% range
+                progressBar.style.width = progressPercentage + '%';
+            }
+
+            function showError(message) {
+                // Create or update error message
+                let errorEl = document.querySelector('.assessment-error');
+                if (!errorEl) {
+                    errorEl = document.createElement('div');
+                    errorEl.className = 'alert alert-danger assessment-error';
+                    document.querySelector('.assessment-content').insertBefore(errorEl, document.querySelector('.questions-container'));
+                }
+                errorEl.innerHTML = `<i class="bi bi-exclamation-triangle me-2"></i>${message}`;
+                errorEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                
+                // Auto-hide after 5 seconds
+                setTimeout(() => {
+                    if (errorEl) errorEl.remove();
+                }, 5000);
+            }
+
+            // Indicator click handlers
+            indicators.forEach((indicator, index) => {
+                indicator.addEventListener('click', () => {
+                    showQuestion(index);
+                });
+            });
+        });
+    </script>
+}

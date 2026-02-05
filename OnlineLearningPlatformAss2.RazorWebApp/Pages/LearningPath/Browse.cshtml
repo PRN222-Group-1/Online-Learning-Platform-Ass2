@@ -1,0 +1,398 @@
+@page "/LearningPath/Browse"
+@model OnlineLearningPlatformAss2.RazorWebApp.Pages.LearningPath.BrowseModel
+
+@{
+    ViewData["Title"] = "Learning Paths - LearnHub";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/learning-paths.css" asp-append-version="true" />
+}
+
+<!-- Hero Section -->
+<section class="paths-hero">
+    <div class="container">
+        <div class="hero-content text-center">
+            <h1 class="hero-title">Learning Paths</h1>
+            <p class="hero-subtitle">
+                Structured learning journeys designed to help you master new skills step by step.
+                Choose from curated paths or get personalized recommendations based on your goals.
+            </p>
+            
+            @if (Model.IsAuthenticated)
+            {
+                <div class="hero-actions">
+                    <a asp-page="/Assessment/Start" class="btn btn-primary btn-lg me-3">
+                        <i class="bi bi-lightning-charge me-2"></i>
+                        Get Personalized Path
+                    </a>
+                    <a href="#all-paths" class="btn btn-outline-primary btn-lg">
+                        Browse All Paths
+                    </a>
+                </div>
+            }
+            else
+            {
+                <div class="hero-actions">
+                    <a asp-page="/User/Register" class="btn btn-primary btn-lg me-3">
+                        <i class="bi bi-person-plus me-2"></i>
+                        Start Learning Today
+                    </a>
+                    <a href="#all-paths" class="btn btn-outline-primary btn-lg">
+                        Browse Paths
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Featured Paths -->
+@if (Model.FeaturedPaths.Any())
+{
+    <section class="featured-paths">
+        <div class="container">
+            <div class="section-header">
+                <h2>Featured Learning Paths</h2>
+                <p>Popular paths chosen by thousands of successful learners</p>
+            </div>
+
+            <div class="paths-grid featured-grid">
+                @foreach (var path in Model.FeaturedPaths.Take(2))
+                {
+                    <div class="path-card featured-card">
+                        <div class="card-badge">
+                            <i class="bi bi-star-fill"></i>
+                            <span>Featured</span>
+                        </div>
+                        
+                        <div class="path-header">
+                            <h3 class="path-title">
+                                <a asp-page="/LearningPath/Details" asp-route-id="@path.Id">@path.Title</a>
+                            </h3>
+                            <p class="path-description">@path.Description</p>
+                        </div>
+
+                        <div class="path-stats">
+                            <div class="stat">
+                                <i class="bi bi-collection"></i>
+                                <span>@path.CourseCount Courses</span>
+                            </div>
+                            <div class="stat">
+                                <i class="bi bi-clock"></i>
+                                <span>@path.FormattedDuration</span>
+                            </div>
+                            <div class="stat">
+                                <i class="bi bi-bar-chart"></i>
+                                <span>@path.Level</span>
+                            </div>
+                        </div>
+
+                        <div class="path-skills">
+                            <h6>What you'll learn:</h6>
+                            <div class="skills-tags">
+                                @if (path.Title.Contains("Web"))
+                                {
+                                    <span class="skill-tag">HTML/CSS</span>
+                                    <span class="skill-tag">JavaScript</span>
+                                    <span class="skill-tag">React</span>
+                                }
+                                else if (path.Title.Contains("Data"))
+                                {
+                                    <span class="skill-tag">Python</span>
+                                    <span class="skill-tag">Machine Learning</span>
+                                    <span class="skill-tag">Data Analysis</span>
+                                }
+                                else
+                                {
+                                    <span class="skill-tag">Professional Skills</span>
+                                    <span class="skill-tag">Best Practices</span>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="path-footer">
+                            <div class="price-info">
+                                <span class="current-price">@path.FormattedPrice</span>
+                                @if (path.Price > 0)
+                                {
+                                    <span class="original-price">$@((path.Price * 1.4m).ToString("F0"))</span>
+                                }
+                            </div>
+                            <a asp-page="/LearningPath/Details" asp-route-id="@path.Id" class="btn btn-primary">
+                                View Path
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+}
+
+<!-- All Learning Paths -->
+<section class="all-paths" id="all-paths">
+    <div class="container">
+        <div class="section-header">
+            <h2>All Learning Paths</h2>
+            <p>Choose the path that matches your career goals and skill level</p>
+        </div>
+
+        <!-- Filters -->
+        <div class="paths-filters">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label>Category:</label>
+                    <select class="form-select" id="categoryFilter">
+                        <option value="">All Categories</option>
+                        <option value="web-development">Web Development</option>
+                        <option value="data-science">Data Science</option>
+                        <option value="design">Design</option>
+                        <option value="business">Business</option>
+                        <option value="marketing">Marketing</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Level:</label>
+                    <select class="form-select" id="levelFilter">
+                        <option value="">All Levels</option>
+                        <option value="beginner">Beginner</option>
+                        <option value="intermediate">Intermediate</option>
+                        <option value="advanced">Advanced</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Price:</label>
+                    <select class="form-select" id="priceFilter">
+                        <option value="">Any Price</option>
+                        <option value="free">Free</option>
+                        <option value="paid">Paid</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-outline-secondary" onclick="clearFilters()">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    Clear
+                </button>
+            </div>
+        </div>
+
+        @if (Model.LearningPaths.Any())
+        {
+            <div class="paths-grid" id="pathsGrid">
+                @foreach (var path in Model.LearningPaths)
+                {
+                    <div class="path-card" 
+                         data-category="@path.Title.ToLower().Replace(" ", "-")" 
+                         data-level="@path.Level.ToLower()"
+                         data-price="@(path.Price == 0 ? "free" : "paid")">
+                        
+                        @if (path.IsCustomPath)
+                        {
+                            <div class="card-badge personalized">
+                                <i class="bi bi-person-check"></i>
+                                <span>Personalized</span>
+                            </div>
+                        }
+                        
+                        <div class="path-header">
+                            <h4 class="path-title">
+                                <a asp-page="/LearningPath/Details" asp-route-id="@path.Id">@path.Title</a>
+                            </h4>
+                            <p class="path-description">@path.Description</p>
+                        </div>
+
+                        <div class="path-stats">
+                            <div class="stat">
+                                <i class="bi bi-collection"></i>
+                                <span>@path.CourseCount Courses</span>
+                            </div>
+                            <div class="stat">
+                                <i class="bi bi-clock"></i>
+                                <span>@path.FormattedDuration</span>
+                            </div>
+                            <div class="stat">
+                                <i class="bi bi-bar-chart"></i>
+                                <span>@path.Level</span>
+                            </div>
+                        </div>
+
+                        @if (path.IsEnrolled)
+                        {
+                            <div class="path-preview">
+                                <h6>Your Learning Journey:</h6>
+                                <div class="journey-steps">
+                                    @for (int i = 1; i <= Math.Min(4, path.CourseCount); i++)
+                                    {
+                                        <div class="step @(i == 1 ? "active" : "")">
+                                            <span class="step-number">@i</span>
+                                        </div>
+                                        @if (i < Math.Min(4, path.CourseCount))
+                                        {
+                                            <div class="step-connector"></div>
+                                        }
+                                    }
+                                    @if (path.CourseCount > 4)
+                                    {
+                                        <div class="step-more">+@(path.CourseCount - 4)</div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="path-preview">
+                                <h6>Course Curriculum:</h6>
+                                <p class="text-muted small">@path.CourseCount courses included in this journey.</p>
+                            </div>
+                        }
+
+                        <div class="path-footer">
+                            <div class="price-info">
+                                <span class="current-price">@path.FormattedPrice</span>
+                                @if (path.Price > 0)
+                                {
+                                    <small class="text-muted">One-time payment</small>
+                                }
+                            </div>
+                            <div class="path-actions">
+                                <a asp-page="/LearningPath/Details" asp-route-id="@path.Id" class="btn btn-primary">
+                                    View Details
+                                </a>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="addToWishlist('@path.Id')">
+                                    <i class="bi bi-heart"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="bi bi-signpost-2"></i>
+                </div>
+                <h4>No Learning Paths Available</h4>
+                <p>We're working on creating amazing learning paths for you. Check back soon!</p>
+                <a asp-page="/Index" class="btn btn-primary">
+                    Browse Courses Instead
+                </a>
+            </div>
+        }
+    </div>
+</section>
+
+<!-- CTA Section -->
+@if (!Model.IsAuthenticated)
+{
+    <section class="cta-section">
+        <div class="container">
+            <div class="cta-content text-center">
+                <h3>Ready to Start Your Learning Journey?</h3>
+                <p>Join thousands of learners who have achieved their goals through our structured learning paths.</p>
+                <div class="cta-stats">
+                    <div class="stat">
+                        <span class="number">50K+</span>
+                        <span class="label">Active Learners</span>
+                    </div>
+                    <div class="stat">
+                        <span class="number">95%</span>
+                        <span class="label">Success Rate</span>
+                    </div>
+                    <div class="stat">
+                        <span class="number">24/7</span>
+                        <span class="label">Support</span>
+                    </div>
+                </div>
+                <a asp-page="/User/Register" class="btn btn-success btn-lg mt-4">
+                    <i class="bi bi-rocket-takeoff me-2"></i>
+                    Start Learning Today
+                </a>
+            </div>
+        </div>
+    </section>
+}
+
+@section Scripts {
+    <script>
+        // Filter functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const categoryFilter = document.getElementById('categoryFilter');
+            const levelFilter = document.getElementById('levelFilter');
+            const priceFilter = document.getElementById('priceFilter');
+            const pathCards = document.querySelectorAll('.path-card');
+
+            function applyFilters() {
+                const selectedCategory = categoryFilter.value;
+                const selectedLevel = levelFilter.value;
+                const selectedPrice = priceFilter.value;
+
+                pathCards.forEach(card => {
+                    const cardCategory = card.dataset.category;
+                    const cardLevel = card.dataset.level;
+                    const cardPrice = card.dataset.price;
+
+                    let showCard = true;
+
+                    if (selectedCategory && !cardCategory.includes(selectedCategory)) {
+                        showCard = false;
+                    }
+                    if (selectedLevel && cardLevel !== selectedLevel) {
+                        showCard = false;
+                    }
+                    if (selectedPrice && cardPrice !== selectedPrice) {
+                        showCard = false;
+                    }
+
+                    card.style.display = showCard ? 'block' : 'none';
+                });
+
+                // Update results count
+                const visibleCards = document.querySelectorAll('.path-card[style="display: block"], .path-card:not([style*="none"])');
+                updateResultsCount(visibleCards.length);
+            }
+
+            function updateResultsCount(count) {
+                // You can add a results counter here
+                console.log(`Showing ${count} learning paths`);
+            }
+
+            // Event listeners
+            categoryFilter.addEventListener('change', applyFilters);
+            levelFilter.addEventListener('change', applyFilters);
+            priceFilter.addEventListener('change', applyFilters);
+        });
+
+        // Clear filters
+        function clearFilters() {
+            document.getElementById('categoryFilter').value = '';
+            document.getElementById('levelFilter').value = '';
+            document.getElementById('priceFilter').value = '';
+            
+            document.querySelectorAll('.path-card').forEach(card => {
+                card.style.display = 'block';
+            });
+        }
+
+        // Add to wishlist
+        function addToWishlist(pathId) {
+            // Implementation for adding to wishlist
+            console.log('Added to wishlist:', pathId);
+            
+            // Show feedback
+            const btn = event.target.closest('button');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-heart-fill"></i>';
+            btn.classList.add('added');
+            
+            setTimeout(() => {
+                btn.innerHTML = originalContent;
+                btn.classList.remove('added');
+            }, 2000);
+        }
+    </script>
+}
