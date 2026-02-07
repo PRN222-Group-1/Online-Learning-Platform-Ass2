@@ -12,6 +12,7 @@
     <PackageReference Include="BCrypt.Net-Next" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Core" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
   <ItemGroup>

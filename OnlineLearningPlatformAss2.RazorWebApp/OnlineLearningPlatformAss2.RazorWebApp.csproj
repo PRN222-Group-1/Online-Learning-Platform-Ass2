@@ -20,7 +20,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\OnlineLearningPlatformAss2.Data\OnlineLearningPlatformAss2.Data.csproj" />
     <ProjectReference Include="..\OnlineLearningPlatformAss2.Service\OnlineLearningPlatformAss2.Service.csproj" />
   </ItemGroup>
 

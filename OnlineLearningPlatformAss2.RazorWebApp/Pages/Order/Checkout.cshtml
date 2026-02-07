@@ -1,0 +1,147 @@
+@page
+@model OnlineLearningPlatformAss2.RazorWebApp.Pages.Order.CheckoutModel
+@{
+    ViewData["Title"] = "Thanh toán";
+}
+
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4 border-0">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-cart-check me-2"></i>Thanh toán</h4>
+                </div>
+                <div class="card-body">
+                    <h5 class="mb-3">Thông tin đơn hàng</h5>
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
+                        <div>
+                            <h6 class="mb-0 fw-bold">@Model.ItemTitle</h6>
+                            <small class="text-muted">@Model.ItemType</small>
+                        </div>
+                        <span class="h5 mb-0 text-primary fw-bold">@string.Format("{0:N0}₫", Model.ItemPrice)</span>
+                    </div>
+
+                    <form method="post">
+                        <input type="hidden" asp-for="ItemId" />
+                        <input type="hidden" asp-for="ItemType" />
+                        <input type="hidden" asp-for="PaymentMethod" value="VNPay" />
+
+                        <h5 class="mt-4 mb-3">Phương thức thanh toán</h5>
+                        <div class="row justify-content-center">
+                            <div class="col-md-8 mb-3">
+                                <div class="card h-100 border-primary shadow-sm payment-option selected" id="vnpayOption">
+                                    <div class="card-body text-center py-4">
+                                        <div class="mb-3">
+                                            <img src="https://vnpay.vn/s1/statics.vnpay.vn/2023/9/06ncktiwd6dc1694418196384.png" 
+                                                 alt="VNPay" 
+                                                 style="height: 60px; object-fit: contain;">
+                                        </div>
+                                        <h5 class="fw-bold text-primary mb-2">VNPay</h5>
+                                        <p class="text-muted small mb-0">Thanh toán qua cổng VNPay</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="supported-banks mt-4 mb-4">
+                            <p class="text-center text-muted small mb-2">Hỗ trợ thanh toán qua</p>
+                            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                                <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/02/Logo-Vietcombank.png" alt="Vietcombank" style="height: 30px; object-fit: contain;">
+                                <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-Techcombank-V.png" alt="Techcombank" style="height: 30px; object-fit: contain;">
+                                <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-BIDV-Transparent.png" alt="BIDV" style="height: 30px; object-fit: contain;">
+                                <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-VietinBank.png" alt="Vietinbank" style="height: 30px; object-fit: contain;">
+                                <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/02/Logo-MBBank-Transparent-PNG.png" alt="MBBank" style="height: 30px; object-fit: contain;">
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-lg btn-primary">
+                                    <i class="bi bi-credit-card-2-front me-2"></i>
+                                    Thanh toán @string.Format("{0:N0}₫", Model.ItemPrice) qua VNPay
+                                </button>
+                            </div>
+                            <div class="text-center mt-3">
+                                @if (Model.ItemType == "Course")
+                                {
+                                    <a asp-page="/Course/Details" asp-route-id="@Model.ItemId" class="text-muted">
+                                        <i class="bi bi-arrow-left me-1"></i> Hủy và quay lại
+                                    </a>
+                                }
+                                else
+                                {
+                                    <a asp-page="/LearningPath/Details" asp-route-id="@Model.ItemId" class="text-muted">
+                                        <i class="bi bi-arrow-left me-1"></i> Hủy và quay lại
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4 border-0">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0"><i class="bi bi-receipt me-2"></i>Tóm tắt đơn hàng</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Tạm tính</span>
+                        <span>@string.Format("{0:N0}₫", Model.ItemPrice)</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2 text-muted">
+                        <span>Thuế VAT</span>
+                        <span>0₫</span>
+                    </div>
+                    <hr />
+                    <div class="d-flex justify-content-between mb-0 h5">
+                        <strong>Tổng cộng</strong>
+                        <strong class="text-primary">@string.Format("{0:N0}₫", Model.ItemPrice)</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-success border-0 shadow-sm">
+                <div class="d-flex align-items-start">
+                    <i class="bi bi-check-circle-fill text-success me-2 fs-5"></i>
+                    <div>
+                        <strong>Quyền lợi sau khi mua</strong>
+                        <ul class="small mb-0 mt-2 ps-3">
+                            <li>Truy cập @Model.ItemType.ToLower() ngay lập tức</li>
+                            <li>Học mọi lúc, mọi nơi</li>
+                            <li>Chứng chỉ hoàn thành</li>
+                            <li>Hỗ trợ từ giảng viên</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <style>
+        .payment-option {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        .payment-option:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(13, 110, 253, 0.25) !important;
+        }
+        .payment-option.selected {
+            border-color: #0d6efd !important;
+            background-color: #f8f9fa;
+        }
+        .supported-banks img {
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .supported-banks img:hover {
+            opacity: 1;
+        }
+    </style>
+}

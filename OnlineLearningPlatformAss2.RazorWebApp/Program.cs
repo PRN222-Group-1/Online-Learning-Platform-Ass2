@@ -60,6 +60,7 @@ builder.Services.AddScoped<IQuizService, QuizService>();
 builder.Services.AddScoped<IDiscussionService, DiscussionService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IVnPayService, VnPayService>();
 
 // Add SignalR
 builder.Services.AddSignalR();
