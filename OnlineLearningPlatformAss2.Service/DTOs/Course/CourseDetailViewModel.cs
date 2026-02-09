@@ -54,6 +54,8 @@ public class LessonViewModel
     public bool IsPreview { get; set; }
     public bool IsCompleted { get; set; }
     public int? LastWatchedPosition { get; set; }
+    public string? AiSummary { get; set; }
+    public string? Transcript { get; set; }
     
     // Helper properties
     public string FormattedDuration => Duration > 0 ? $"{Duration}m" : "TBD";

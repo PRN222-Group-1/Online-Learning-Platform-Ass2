@@ -8,6 +8,6 @@ namespace OnlineLearningPlatformAss2.Service.Services.Interfaces
 {
     public interface ITranscriptService
     {
-        Task<string> GenerateTranscriptFromVideoAsync(string videoUrl);
+        Task<string> GenerateTranscriptFromVideoAsync(string videoUrl, bool summarize = true);
     }
 }

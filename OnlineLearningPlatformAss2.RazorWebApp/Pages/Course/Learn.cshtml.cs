@@ -17,16 +17,21 @@ public class LearnModel : PageModel
     private readonly IQuizService _quizService;
     private readonly IDiscussionService _discussionService;
     private readonly IReviewService _reviewService;
-    private readonly IAiAssistantService _aiAssistantService;
+    private readonly ITranscriptService _transcriptService;
 
-    public LearnModel(ICourseService courseService, IQuizService quizService, IDiscussionService discussionService, IReviewService reviewService, IAiAssistantService aiAssistantService)
+    private readonly IChatbotService _chatbotService;
+
+    public LearnModel(ICourseService courseService, IQuizService quizService, IDiscussionService discussionService, IReviewService reviewService, ITranscriptService transcriptService, IChatbotService chatbotService)
     {
         _courseService = courseService;
         _quizService = quizService;
         _discussionService = discussionService;
         _reviewService = reviewService;
-        _aiAssistantService = aiAssistantService;
+        _transcriptService = transcriptService;
+        _chatbotService = chatbotService;
     }
+
+
 
     public CourseLearnViewModel? CourseLearn { get; set; }
     public bool HasReviewed { get; set; }
@@ -196,14 +201,42 @@ public class LearnModel : PageModel
         var enrollmentId = await _courseService.GetEnrollmentIdAsync(userId, request.CourseId);
         if (!enrollmentId.HasValue) return NotFound();
 
-        var transcript = await _courseService.GetLessonTranscriptAsync(enrollmentId.Value, request.LessonId);
+        // Need to get Video URL. GetCourseLearnAsync returns all modules/lessons.
+        var courseLearn = await _courseService.GetCourseLearnAsync(enrollmentId.Value);
+        var lesson = courseLearn?.Modules.SelectMany(m => m.Lessons).FirstOrDefault(l => l.Id == request.LessonId);
+
+        if (lesson == null || string.IsNullOrEmpty(lesson.VideoUrl))
+        {
+             return new JsonResult(new { summary = "Video not available for summary generation." });
+        }
         
-        string systemContext = "You are an AI assistant for an online learning platform. Provide a concise summary of the following video transcript.";
-        string prompt = string.IsNullOrEmpty(transcript) ? "The video has no transcript available." : transcript;
-        
-        var summary = await _aiAssistantService.GetChatResponseAsync(prompt, systemContext);
-        
-        return new JsonResult(new { summary });
+        try 
+        {
+            var fullTranscript = await _transcriptService.GenerateTranscriptFromVideoAsync(lesson.VideoUrl, true);
+            
+            // Extract summary if present
+            string summary = fullTranscript;
+            if (fullTranscript.Contains("### Summary"))
+            {
+                summary = fullTranscript.Split(new[] { "### Summary" }, StringSplitOptions.None).Last().Trim();
+            }
+            else
+            {
+                 // If no summary tag, just return a message or the text?
+                 // The service ensures "### Summary" is added if summary exists.
+                 // If not, maybe it failed to summarize.
+                 if (fullTranscript.Length > 500) 
+                 {
+                     summary = "Summary generation failed or returned raw transcript.";
+                 }
+            }
+
+            return new JsonResult(new { summary });
+        }
+        catch (Exception ex)
+        {
+             return new JsonResult(new { summary = $"Error generating summary: {ex.Message}" });
+        }
     }
 
     public async Task<IActionResult> OnPostAskAiAsync([FromBody] LearnAiQuestionRequest request)
@@ -216,10 +249,9 @@ public class LearnModel : PageModel
 
         var transcript = await _courseService.GetLessonTranscriptAsync(enrollmentId.Value, request.LessonId);
         
-        string systemContext = "You are an AI assistant. Answer the user's question based ONLY on the provided video transcript. You MUST cite the timestamp where the information is found in your answer (e.g., [00:15] or [01:23]). If the user asks where a topic is discussed, provide the specific timestamp.";
-        string context = string.IsNullOrEmpty(transcript) ? "No transcript available." : $"Transcript: {transcript}";
+        string context = string.IsNullOrEmpty(transcript) ? "No transcript available." : transcript;
         
-        var answer = await _aiAssistantService.GetChatResponseAsync(request.Question, $"{systemContext}\n\n{context}");
+        var answer = await _chatbotService.AskWithContextAsync(request.Question, context);
         
         return new JsonResult(new { answer });
     }

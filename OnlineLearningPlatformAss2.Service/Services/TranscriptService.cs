@@ -1,14 +1,16 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 using OnlineLearningPlatformAss2.Service.Services.Interfaces;
+using Microsoft.Extensions.Configuration;
 
 namespace OnlineLearningPlatformAss2.Service.Services;
 
-public class TranscriptService(HttpClient httpClient) : ITranscriptService
+public class TranscriptService(HttpClient httpClient, IConfiguration configuration) : ITranscriptService
 {
     private readonly HttpClient _http = httpClient;
+    private readonly string _baseUrl = "http://100.86.222.32:8000/transcribe/";
 
-    public async Task<string> GenerateTranscriptFromVideoAsync(string videoUrl)
+    public async Task<string> GenerateTranscriptFromVideoAsync(string videoUrl, bool summarize = true)
     {
         var tempFile = Path.GetTempFileName();
 
@@ -28,39 +30,27 @@ public class TranscriptService(HttpClient httpClient) : ITranscriptService
             fileContent.Headers.ContentType = new MediaTypeHeaderValue("video/mp4");
 
             form.Add(fileContent, "file", Path.GetFileName(tempFile));
+            form.Add(new StringContent(summarize.ToString().ToLower()), "summarize");
 
-            var response = await _http.PostAsync(
-                "http://100.86.222.32:8000/transcript",
-                form
-            );
+            var response = await _http.PostAsync(_baseUrl, form);
 
             response.EnsureSuccessStatusCode();
 
             var json = await response.Content.ReadAsStringAsync();
             
-            // Use System.Text.Json instead of Newtonsoft.Json
             using var doc = JsonDocument.Parse(json);
             
-            if (doc.RootElement.TryGetProperty("segments", out var segmentsElement) && segmentsElement.ValueKind == JsonValueKind.Array)
+            if (doc.RootElement.TryGetProperty("data", out var dataElement))
             {
-                var sb = new System.Text.StringBuilder();
-                foreach (var segment in segmentsElement.EnumerateArray())
+                if (dataElement.TryGetProperty("text", out var textElement))
                 {
-                    if (segment.TryGetProperty("start", out var startProc) && segment.TryGetProperty("text", out var textProc))
-                    {
-                        var start = startProc.GetDouble();
-                        var text = textProc.GetString() ?? "";
-                        sb.AppendLine($"[{TimeSpan.FromSeconds(start):hh\\:mm\\:ss}] {text.Trim()}");
-                    }
+                     var transcript = textElement.GetString() ?? string.Empty;
+                     if (summarize && dataElement.TryGetProperty("summary", out var summaryElement))
+                     {
+                         transcript += "\n\n### Summary\n" + (summaryElement.GetString() ?? string.Empty);
+                     }
+                     return transcript;
                 }
-                var result = sb.ToString();
-                if (!string.IsNullOrWhiteSpace(result))
-                    return result;
-            }
-
-            if (doc.RootElement.TryGetProperty("text", out var textElement))
-            {
-                return textElement.GetString() ?? string.Empty;
             }
             
             return string.Empty;

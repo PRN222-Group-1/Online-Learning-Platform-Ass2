@@ -114,9 +114,7 @@
                                     <li class="nav-item" role="presentation">
                                         <button class="nav-link active rounded-pill px-4" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">Overview</button>
                                     </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link rounded-pill px-4" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab">AI Summary</button>
-                                    </li>
+
                                     <li class="nav-item" role="presentation">
                                         <button class="nav-link rounded-pill px-4" id="qa-tab" data-bs-toggle="tab" data-bs-target="#qa" type="button" role="tab">Q&A</button>
                                     </li>
@@ -131,6 +129,35 @@
                                          <div class="lesson-description text-secondary" id="lessonDescription">
                                             @Html.Raw(Model.CourseLearn.CurrentLesson?.Content ?? "Please select a lesson to start learning.")
                                         </div>
+                                    <!-- AI Summary Section (Merged) -->
+                                    <div class="mt-5">
+                                        <h5 class="fw-bold text-primary mb-3"><i class="bi bi-magic me-2"></i>AI Summary & Analysis</h5>
+                                        <div id="summaryContainer" class="bg-light p-4 rounded-4">
+                                            <div class="text-center py-4" id="summaryLoading" style="display:none;">
+                                                <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
+                                                <p class="mt-2 text-muted">Generating AI Summary & Analyzing Video...</p>
+                                            </div>
+                                            <div id="summaryContent" class="fs-6 lh-lg text-dark mb-4"></div>
+                                            <div class="text-center" id="generateSummaryBtnContainer">
+                                                 <button class="btn btn-primary rounded-pill px-4" onclick="generateSummary()">
+                                                    <i class="bi bi-magic me-2"></i>Generate Video Summary
+                                                 </button>
+                                            </div>
+                                            
+                                            <div id="aiQnaSection" class="d-none mt-4 border-top pt-4">
+                                                <h6 class="fw-bold mb-3">Ask AI about this video</h6>
+                                                <div class="input-group mb-3">
+                                                    <input type="text" id="aiQuestionInput" class="form-control rounded-start-pill ps-3" placeholder="Ask about concepts, timestamps, etc.">
+                                                    <button class="btn btn-outline-primary rounded-end-pill px-4" type="button" onclick="askAi()">Ask</button>
+                                                </div>
+                                                <div id="aiAnswer" class="bg-white p-3 rounded-3 d-none border-start border-4 border-primary">
+                                                    <h6 class="fw-bold text-primary mb-1">AI Answer:</h6>
+                                                    <p class="mb-0 text-secondary" id="aiAnswerText"></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                          <!-- Quiz Section -->
                                         <div id="quizSection" class="mt-5 d-none">
                                             <div class="card border-0 bg-light rounded-4">
@@ -143,31 +170,7 @@
                                         </div>
                                     </div>
                                     
-                                    <!-- AI Summary Tab -->
-                                    <div class="tab-pane fade" id="summary" role="tabpanel">
-                                        <div class="text-center py-4" id="summaryLoading" style="display:none;">
-                                            <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
-                                            <p class="mt-2 text-muted">Generating AI Summary & Analyzing Video...</p>
-                                        </div>
-                                        <div id="summaryContent" class="fs-6 lh-lg text-dark mb-4"></div>
-                                        <div class="text-center mb-4" id="generateSummaryBtnContainer">
-                                             <button class="btn btn-primary rounded-pill px-4" onclick="generateSummary()">
-                                                <i class="bi bi-magic me-2"></i>Generate Video Summary
-                                             </button>
-                                        </div>
-                                        
-                                        <hr class="my-4 text-muted">
-                                        
-                                        <h5 class="fw-bold mb-3"><i class="bi bi-robot me-2 text-primary"></i>Ask AI about this video</h5>
-                                        <div class="input-group mb-3">
-                                            <input type="text" id="aiQuestionInput" class="form-control rounded-start-pill ps-3" placeholder="Ask about concepts, timestamps, etc.">
-                                            <button class="btn btn-outline-primary rounded-end-pill px-4" type="button" onclick="askAi()">Ask</button>
-                                        </div>
-                                        <div id="aiAnswer" class="bg-light p-3 rounded-3 d-none border-start border-4 border-primary">
-                                            <h6 class="fw-bold text-primary mb-1">AI Answer:</h6>
-                                            <p class="mb-0 text-secondary" id="aiAnswerText"></p>
-                                        </div>
-                                    </div>
+
                                     <!-- Q&A & Reviews (Keep inner content similar but Ensure ID matches) -->
                                     <div class="tab-pane fade" id="qa" role="tabpanel">
                                         <!-- ... Q&A Content ... -->
@@ -300,6 +303,7 @@
 
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
     <script>
         // JavaScript for interactivity
         const modulesData = @Json.Serialize(Model.CourseLearn?.Modules ?? new List<OnlineLearningPlatformAss2.Service.DTOs.Course.ModuleViewModel>());
@@ -443,11 +447,26 @@
                 }
             }
 
-            // Reset AI Tab
+            // Reset AI Section
             const sumContent = document.getElementById('summaryContent');
-            if(sumContent) sumContent.innerHTML = '';
             const genBtn = document.getElementById('generateSummaryBtnContainer');
-            if(genBtn) genBtn.style.display = 'block';
+            const aiSection = document.getElementById('aiQnaSection');
+            
+            if (lesson.aiSummary && lesson.aiSummary.trim() !== "") {
+                 if(sumContent) sumContent.innerHTML = formatSummary(lesson.aiSummary);
+                 if(genBtn) genBtn.style.display = 'none';
+                 if(aiSection) aiSection.classList.remove('d-none');
+            } else {
+                 if(sumContent) sumContent.innerHTML = '';
+                 if(genBtn) genBtn.style.display = 'block';
+                 if(aiSection) aiSection.classList.add('d-none');
+                 
+                 // If no video, hide generate button
+                 if(!lesson.videoUrl || lesson.videoUrl === 'null' || lesson.videoUrl.trim() === '') {
+                     if(genBtn) genBtn.style.display = 'none';
+                 }
+            }
+
             const aiAns = document.getElementById('aiAnswer');
             if(aiAns) aiAns.classList.add('d-none');
             const aiInp = document.getElementById('aiQuestionInput');
@@ -499,25 +518,53 @@
              } catch(e) { console.error("UpdateLastView failed", e); }
         }
         
+        // SignalR Connection for Transcript
+        const transcriptConnection = new signalR.HubConnectionBuilder()
+            .withUrl("/hubs/transcript")
+            .build();
+
+        transcriptConnection.on("ReceiveSummary", function (summary) {
+            document.getElementById('summaryLoading').style.display = 'none';
+            document.getElementById('summaryContent').innerHTML = formatSummary(summary);
+            
+            // Show Q&A section
+             document.getElementById('aiQnaSection').classList.remove('d-none');
+             
+            // Update local model so if we switch back it's there
+            if(lessonsMap[currentLessonId]) lessonsMap[currentLessonId].aiSummary = summary;
+        });
+
+        function formatSummary(summary) {
+             return summary ? summary
+                .replace(/^### (.*$)/gim, '<h5>$1</h5>') // Headers
+                .replace(/\* \*\*/g, '• <strong>') // Bold bullets
+                .replace(/\*\*/g, '</strong>') // Bold end
+                .replace(/\n/g, '<br>') : 'No summary available.';
+        }
+
+        transcriptConnection.on("ReceiveError", function (message) {
+            document.getElementById('summaryLoading').style.display = 'none';
+            document.getElementById('summaryContent').innerHTML = `<span class="text-danger">${message}</span>`;
+            document.getElementById('generateSummaryBtnContainer').style.display = 'block';
+        });
+
+        transcriptConnection.start().catch(err => console.error("SignalR Connection Error: ", err));
+
         async function generateSummary() {
             document.getElementById('summaryLoading').style.display = 'block';
             document.getElementById('summaryContent').innerHTML = '';
             document.getElementById('generateSummaryBtnContainer').style.display = 'none';
             
             try {
-                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-                const response = await fetch('?handler=GenerateSummary', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
-                    body: JSON.stringify({ courseId: currentCourseId, lessonId: currentLessonId })
-                });
-                const result = await response.json();
-                document.getElementById('summaryContent').innerHTML = result.summary ? result.summary.replace(/\n/g, '<br>') : 'No summary available.';
-            } catch(e) {
-                document.getElementById('summaryContent').textContent = "Failed to generate summary.";
-                document.getElementById('generateSummaryBtnContainer').style.display = 'block';
-            } finally {
+                if (transcriptConnection.state === signalR.HubConnectionState.Disconnected) {
+                    await transcriptConnection.start();
+                }
+                await transcriptConnection.invoke("GenerateSummary", currentCourseId, currentLessonId);
+            } catch (err) {
+                console.error(err);
                 document.getElementById('summaryLoading').style.display = 'none';
+                document.getElementById('summaryContent').textContent = "Failed to connect to server.";
+                document.getElementById('generateSummaryBtnContainer').style.display = 'block';
             }
         }
         
@@ -537,9 +584,34 @@
                     body: JSON.stringify({ courseId: currentCourseId, lessonId: currentLessonId, question: q })
                 });
                 const result = await response.json();
-                ansText.textContent = result.answer;
+                ansText.innerHTML = formatAiAnswer(result.answer);
             } catch(e) {
                 ansText.textContent = "AI failed to respond. Please try again.";
+            }
+        }
+
+        function formatAiAnswer(text) {
+            // Replace [mm:ss] or [m:ss] with clickable span
+            return text.replace(/\[(\d{1,2}):(\d{2})\]/g, (match, min, sec) => {
+                const seconds = parseInt(min) * 60 + parseInt(sec);
+                return `<a href="javascript:void(0)" onclick="seekVideo(${seconds})" class="text-primary fw-bold text-decoration-none">${match}</a>`;
+            });
+        }
+
+        function seekVideo(seconds) {
+            const video = document.getElementById('videoPlayer');
+            if (video) {
+                video.currentTime = seconds;
+                video.play();
+                video.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                // Try YouTube iframe
+                const iframe = document.querySelector('#videoContainer iframe');
+                if (iframe) {
+                    // Try postMessage for YouTube
+                    iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'seekTo', args: [seconds, true] }), '*');
+                    iframe.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
             }
         }
 

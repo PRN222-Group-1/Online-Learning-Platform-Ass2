@@ -57,12 +57,15 @@ builder.Services.AddScoped<ILearningPathService, LearningPathService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IQuizService, QuizService>();
-builder.Services.AddHttpClient<IAiAssistantService, GroqApiService>();
+builder.Services.AddHttpClient<IChatbotService, ChatbotService>();
 builder.Services.AddScoped<IDiscussionService, DiscussionService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
-builder.Services.AddHttpClient<ITranscriptService, TranscriptService>();
+builder.Services.AddHttpClient<ITranscriptService, TranscriptService>(client =>
+{
+    client.Timeout = Timeout.InfiniteTimeSpan;
+});
 
 // Add SignalR
 builder.Services.AddSignalR();
@@ -89,6 +92,7 @@ app.MapRazorPages();
 // Map SignalR Hubs
 app.MapHub<CourseHub>("/hubs/course");
 app.MapHub<ChatHub>("/hubs/chat");
+app.MapHub<TranscriptHub>("/hubs/transcript");
 
 app.Run();
 

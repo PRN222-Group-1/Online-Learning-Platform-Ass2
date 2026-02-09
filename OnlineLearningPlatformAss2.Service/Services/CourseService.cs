@@ -341,7 +341,9 @@ public class CourseService(
                         Duration = l.Duration ?? 15,
                         OrderIndex = l.OrderIndex,
                         IsCompleted = progress?.IsCompleted ?? false,
-                        LastWatchedPosition = progress?.LastWatchedPosition
+                        LastWatchedPosition = progress?.LastWatchedPosition,
+                        AiSummary = progress?.AiSummary,
+                        Transcript = progress?.Transcript
                     };
                 }).OrderBy(l => l.OrderIndex).ToList()
             }).OrderBy(m => m.OrderIndex).ToList()
@@ -355,6 +357,33 @@ public class CourseService(
 
         enrollment.LastViewedLessonId = lessonId;
         await enrollmentRepository.UpdateAsync(enrollment);
+        await enrollmentRepository.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> SaveLessonAiDataAsync(Guid enrollmentId, Guid lessonId, string transcript, string summary)
+    {
+        var progress = await enrollmentRepository.GetLessonProgressAsync(enrollmentId, lessonId);
+        if (progress == null)
+        {
+            progress = new LessonProgress
+            {
+                ProgressId = Guid.NewGuid(),
+                EnrollmentId = enrollmentId,
+                LessonId = lessonId,
+                Transcript = transcript,
+                AiSummary = summary,
+                LastAccessedAt = DateTime.UtcNow
+            };
+            await enrollmentRepository.AddLessonProgressAsync(progress);
+        }
+        else
+        {
+            progress.Transcript = transcript;
+            progress.AiSummary = summary; 
+            progress.LastAccessedAt = DateTime.UtcNow;
+            await enrollmentRepository.UpdateLessonProgressAsync(progress);
+        }
         await enrollmentRepository.SaveChangesAsync();
         return true;
     }
@@ -389,25 +418,8 @@ public class CourseService(
              return string.Empty;
         }
 
-        if (progress == null)
-        {
-            progress = new LessonProgress
-            {
-                ProgressId = Guid.NewGuid(),
-                EnrollmentId = enrollmentId,
-                LessonId = lessonId,
-                LastWatchedPosition = 0,
-                Transcript = transcript,
-                LastAccessedAt = DateTime.UtcNow
-            };
-            await enrollmentRepository.AddLessonProgressAsync(progress);
-        }
-        else
-        {
-            progress.Transcript = transcript;
-            await enrollmentRepository.UpdateLessonProgressAsync(progress);
-        }
-        await enrollmentRepository.SaveChangesAsync();
+        // Use the new method to save
+        await SaveLessonAiDataAsync(enrollmentId, lessonId, transcript, string.Empty);
         return transcript;
     }
 

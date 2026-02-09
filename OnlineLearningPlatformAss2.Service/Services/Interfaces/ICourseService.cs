@@ -15,6 +15,7 @@ public interface ICourseService
     Task<bool> UpdateVideoProgressAsync(Guid enrollmentId, Guid lessonId, int position);
     Task<bool> UpdateLastViewedLessonAsync(Guid enrollmentId, Guid lessonId);
     Task<string> GetLessonTranscriptAsync(Guid enrollmentId, Guid lessonId);
+    Task<bool> SaveLessonAiDataAsync(Guid enrollmentId, Guid lessonId, string transcript, string summary);
     Task<Guid?> GetEnrollmentIdAsync(Guid userId, Guid courseId);
     Task<bool> SubmitReviewAsync(Guid userId, SubmitReviewDto review);
     Task<IEnumerable<ReviewViewModel>> GetCourseReviewsAsync(Guid courseId);
