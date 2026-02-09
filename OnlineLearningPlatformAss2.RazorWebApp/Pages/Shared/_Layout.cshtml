@@ -429,7 +429,7 @@ document.addEventListener('DOMContentLoaded', function() {
 @* Include Chat Widget for live support (only for authenticated non-admin users) *@
 @if (User.Identity?.IsAuthenticated == true && !User.IsInRole("Admin"))
 {
-    <partial name="_ChatWidget" />
+    <partial name="_Chatbot" />
 }
 
 </body>

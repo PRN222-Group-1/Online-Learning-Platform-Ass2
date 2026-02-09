@@ -11,6 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
+builder.Services.AddControllers();
 
 // Add Entity Framework with SQL Server or In-Memory Database
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -88,6 +89,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapRazorPages();
+app.MapControllers();
 
 // Map SignalR Hubs
 app.MapHub<CourseHub>("/hubs/course");

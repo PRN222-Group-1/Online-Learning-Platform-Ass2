@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using OnlineLearningPlatformAss2.Data.Repositories.Interfaces;
+using OnlineLearningPlatformAss2.Data.Entities;
 using OnlineLearningPlatformAss2.Service.Services.Interfaces;
 using OnlineLearningPlatformAss2.Service.DTOs.Chatbot;
 
@@ -25,7 +26,7 @@ public class ChatbotService(HttpClient httpClient, ICourseRepository courseRepos
         var courses = await _courseRepository.GetCoursesAsync();
         var courseList = courses.ToList();
         var totalCourses = courseList.Count;
-        var courseData = string.Join("\n", courseList.Select(c => $"- {c.Title} (Price: {c.Price:C}): {c.Description}"));
+        var courseData = string.Join("\n", courseList.Select(c => $"- [ID: {c.CourseId}] {c.Title} (Price: {c.Price:C}): {c.Description}"));
 
         var messages = new List<object>
         {
@@ -38,10 +39,11 @@ public class ChatbotService(HttpClient httpClient, ICourseRepository courseRepos
                           courseData + "\n\n" +
                           "NHIỆM VỤ:\n" +
                           "1. Chỉ trả lời các câu hỏi liên quan đến học tập, giáo dục và thông tin về các khóa học trong danh sách trên.\n" +
-                          "2. Nếu người dùng hỏi về các chủ đề không liên quan (chính trị, tôn giáo, giải trí, tư vấn tình cảm, y tế, pháp luật, v.v.) hoặc các nội dung nhạy cảm, hãy từ chối trả lời một cách lịch sự và hướng họ quay lại chủ đề học tập.\n" +
+                          "2. Khi nhắc đến tên khóa học, BẮT BUỘC phải kèm theo đường dẫn chi tiết dưới dạng Markdown: [Tên khóa học](/Course/Details/{CourseId}). Ví dụ: [Lập trình Web](/Course/Details/3fa85f64-5717-4562-b3fc-2c963f66afa6).\n" +
+                          "3. Nếu người dùng hỏi về các chủ đề không liên quan (chính trị, tôn giáo, giải trí, tư vấn tình cảm, y tế, pháp luật, v.v.) hoặc các nội dung nhạy cảm, hãy từ chối trả lời một cách lịch sự và hướng họ quay lại chủ đề học tập.\n" +
                           "   Ví dụ: 'Xin lỗi, tôi chỉ có thể hỗ trợ bạn các vấn đề liên quan đến khóa học và học tập. Bạn cần tư vấn khóa học nào không?'\n" +
-                          "3. Đề xuất các khóa học phù hợp từ danh sách dựa trên nhu cầu của người dùng.\n" +
-                          "4. Trả lời ngắn gọn, thân thiện, chuyên nghiệp bằng tiếng Việt."
+                          "4. Đề xuất các khóa học phù hợp từ danh sách dựa trên nhu cầu của người dùng.\n" +
+                          "5. Trả lời ngắn gọn, thân thiện, chuyên nghiệp bằng tiếng Việt."
             }
         };
 
