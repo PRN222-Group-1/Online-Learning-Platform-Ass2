@@ -262,7 +262,9 @@ public class CourseService(
     {
         var enrollments = await enrollmentRepository.GetStudentEnrollmentsDetailedAsync(userId);
         
-        return enrollments.Select(e => {
+        return enrollments
+            .Where(e => e.Course.Status == "Published")
+            .Select(e => {
             var totalLessons = e.Course.Modules.Sum(m => m.Lessons.Count);
             var completedLessons = e.LessonProgresses.Count(lp => lp.IsCompleted);
             var progress = totalLessons > 0 ? (int)((decimal)completedLessons / totalLessons * 100) : 0;
@@ -306,7 +308,7 @@ public class CourseService(
     public async Task<CourseLearnViewModel?> GetCourseLearnAsync(Guid enrollmentId)
     {
         var enrollment = await enrollmentRepository.GetByIdWithDetailsAsync(enrollmentId);
-        if (enrollment == null)
+        if (enrollment == null || enrollment.Course.Status == "Suspended")
             return null;
 
         var totalLessons = enrollment.Course.Modules.Sum(m => m.Lessons.Count);

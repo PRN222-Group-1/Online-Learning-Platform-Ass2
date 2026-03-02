@@ -128,7 +128,7 @@
                                     </div>
                                     
                                     <div class="course-footer">
-                                        <div class="price">@course.Price.ToString("C")</div>
+                                        <div class="price">@course.Price.ToString("N0") ₫</div>
                                         <a asp-page="/Course/Details" asp-route-id="@course.CourseId" class="btn btn-primary">
                                             View Course
                                         </a>

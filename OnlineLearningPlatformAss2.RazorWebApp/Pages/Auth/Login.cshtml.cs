@@ -1,4 +1,7 @@
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using OnlineLearningPlatformAss2.Service.Services.Interfaces;
@@ -50,6 +53,7 @@ namespace OnlineLearningPlatformAss2.RazorWebApp.Pages.Account
                 var loginDto = new OnlineLearningPlatformAss2.Service.DTOs.User.UserLoginDto
                 {
                     Email = Input.Email,
+                    UsernameOrEmail = Input.Email,
                     Password = Input.Password,
                     RememberMe = Input.RememberMe
                 };
@@ -58,6 +62,27 @@ namespace OnlineLearningPlatformAss2.RazorWebApp.Pages.Account
 
                 if (result.Success && result.Data != null)
                 {
+                    // Create Claims-based identity for [Authorize] to work
+                    var claims = new List<Claim>
+                    {
+                        new(ClaimTypes.NameIdentifier, result.Data.UserId.ToString()),
+                        new(ClaimTypes.Name, result.Data.Username),
+                        new(ClaimTypes.Email, result.Data.Email),
+                        new(ClaimTypes.Role, result.Data.RoleName ?? "User")
+                    };
+
+                    var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                    var authProperties = new AuthenticationProperties
+                    {
+                        IsPersistent = Input.RememberMe,
+                        ExpiresUtc = DateTimeOffset.UtcNow.AddDays(Input.RememberMe ? 30 : 1)
+                    };
+
+                    await HttpContext.SignInAsync(
+                        CookieAuthenticationDefaults.AuthenticationScheme,
+                        new ClaimsPrincipal(claimsIdentity),
+                        authProperties);
+
                     // Store user info in session
                     HttpContext.Session.SetString("UserId", result.Data.UserId.ToString());
                     HttpContext.Session.SetString("UserEmail", result.Data.Email);
@@ -65,9 +90,13 @@ namespace OnlineLearningPlatformAss2.RazorWebApp.Pages.Account
                     HttpContext.Session.SetString("UserRole", result.Data.RoleName);
                     HttpContext.Session.SetString("AvatarUrl", result.Data.AvatarUrl ?? string.Empty);
 
-                    _logger.LogInformation("User {Email} logged in successfully", Input.Email);
+                    _logger.LogInformation("User {Email} logged in successfully with role {Role}", Input.Email, result.Data.RoleName);
                     SuccessMessage = "Login successful!";
-                    return RedirectToPage("/User/Dashboard");
+
+                    // Role-based redirect
+                    return result.Data.RoleName?.Equals("Admin", StringComparison.OrdinalIgnoreCase) == true
+                        ? RedirectToPage("/Admin/Dashboard")
+                        : RedirectToPage("/User/Dashboard");
                 }
                 else
                 {

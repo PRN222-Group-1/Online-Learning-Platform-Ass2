@@ -17,6 +17,32 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/course-learn.css" asp-append-version="true" />
+    <style>
+        #suspensionOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+        #suspensionOverlay.active {
+            display: flex;
+        }
+        .suspension-content {
+            max-width: 500px;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        #suspensionOverlay.active .suspension-content {
+            transform: scale(1);
+        }
+    </style>
 </head>
 
 <body>
@@ -343,7 +369,44 @@
                     updateProgress(currentLessonId, video.currentTime);
                 }
             });
+
+            // SignalR for Course Suspension
+            const courseConnection = new signalR.HubConnectionBuilder()
+                .withUrl("/hubs/course")
+                .withAutomaticReconnect()
+                .build();
+
+            courseConnection.on("ReceiveCourseUpdated", (course) => {
+                if (course.id === currentCourseId && course.status === "Suspended") {
+                    handleCourseSuspended();
+                }
+            });
+
+            courseConnection.start().catch(err => console.error("SignalR CourseHub Error: ", err));
         });
+
+        function handleCourseSuspended() {
+            // Pause any playing video
+            const video = document.getElementById('videoPlayer');
+            if (video) video.pause();
+            
+            // Show overlay
+            let overlay = document.getElementById('suspensionOverlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'suspensionOverlay';
+                overlay.innerHTML = `
+                    <div class="suspension-content text-center p-5 rounded-4 shadow-lg bg-white">
+                        <i class="bi bi-exclamation-octagon-fill text-danger display-1 mb-4"></i>
+                        <h2 class="fw-bold mb-3">Khóa học đã bị tạm ngưng</h2>
+                        <p class="text-secondary mb-4">Rất tiếc, khóa học này hiện đã bị tạm ngưng bởi quản trị viên. Vui lòng liên hệ bộ phận hỗ trợ để biết thêm chi tiết.</p>
+                        <a href="/Course/MyCourses" class="btn btn-primary btn-lg rounded-pill px-5">Quay lại danh sách khóa học</a>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+            }
+            overlay.classList.add('active');
+        }
 
         async function selectLesson(lessonId) {
             const lesson = lessonsMap[lessonId];

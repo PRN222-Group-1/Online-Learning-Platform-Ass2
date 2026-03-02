@@ -108,7 +108,9 @@
                 <div class="row g-4" id="coursesContainer">
                     @foreach (var course in Model.EnrolledCourses)
                     {
-                        <div class="col-lg-4 col-md-6 course-item" data-status="in-progress">
+                        <div class="col-lg-4 col-md-6 course-item" 
+                             data-status="@(course.Progress >= 100 ? "completed" : (course.Progress > 0 ? "in-progress" : "not-started"))"
+                             data-course-id="@course.Id">
                             <div class="enrolled-course-card">
                                 <div class="course-image-container">
                                     @if (!string.IsNullOrEmpty(course.ImageUrl))
@@ -227,6 +229,61 @@
                     });
                 });
             });
+        });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // ===== SignalR Real-time Updates =====
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl("/hubs/course")
+                .withAutomaticReconnect()
+                .build();
+
+            connection.on("ReceiveCourseUpdated", (course) => {
+                const status = (course.status || course.Status);
+                const id = (course.id || course.Id);
+                const title = (course.title || course.Title);
+                console.log("My Courses update received:", id, status);
+                
+                if (status === "Suspended") {
+                    const cards = document.querySelectorAll(`[data-course-id="${id}"]`);
+                    if (cards.length > 0) {
+                        cards.forEach(card => {
+                            card.style.transition = 'all 0.5s ease';
+                            card.style.opacity = '0';
+                            card.style.transform = 'scale(0.9)';
+                            setTimeout(() => card.remove(), 500);
+                        });
+                        showToast(`Khóa học "${title}" đã bị gỡ khỏi danh sách của bạn.`, 'warning');
+                    }
+                } else {
+                    location.reload();
+                }
+            });
+
+            connection.on("ReceiveCourseDeleted", (courseId) => {
+                const cards = document.querySelectorAll(`[data-course-id="${courseId}"]`);
+                cards.forEach(card => card.remove());
+                showToast("Một khóa học đã bị gỡ bỏ.", 'info');
+            });
+
+            connection.start()
+                .then(() => console.log("SignalR CourseHub connected on MyCourses."))
+                .catch(err => console.error("SignalR connection error:", err));
+
+            function showToast(message, type) {
+                const toast = document.createElement('div');
+                toast.className = `alert alert-${type} position-fixed bottom-0 end-0 m-3 shadow-lg`;
+                toast.style.zIndex = 10000;
+                toast.style.minWidth = '300px';
+                toast.innerHTML = `<i class="bi bi-info-circle-fill me-2"></i>${message}`;
+                document.body.appendChild(toast);
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 500);
+                }, 5000);
+            }
         });
     </script>
 }

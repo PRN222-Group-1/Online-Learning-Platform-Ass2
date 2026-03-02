@@ -72,18 +72,20 @@
 <script>
     async function suspendCourse(id) {
         if(!confirm('Suspend this course? It will no longer be visible to students.')) return;
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
         const response = await fetch(`?handler=Suspend&id=${id}`, {
             method: 'POST',
-            headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() }
+            headers: { 'RequestVerificationToken': token }
         });
         if (response.ok) location.reload();
     }
 
     async function unsuspendCourse(id) {
         if(!confirm('Restore this course to Published status?')) return;
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
         const response = await fetch(`?handler=Unsuspend&id=${id}`, {
             method: 'POST',
-            headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() }
+            headers: { 'RequestVerificationToken': token }
         });
         if (response.ok) location.reload();
     }

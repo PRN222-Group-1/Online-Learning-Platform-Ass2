@@ -146,7 +146,6 @@
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
     <script>
-        // AJAX-based filtering
         document.addEventListener('DOMContentLoaded', () => {
             const container = document.getElementById('courseGridContainer');
             const searchInput = document.getElementById('searchInput');
@@ -157,7 +156,6 @@
             let searchTimeout;
             
             async function updateGrid() {
-                // Show loading state
                 container.style.opacity = '0.5';
                 container.style.pointerEvents = 'none';
 
@@ -174,7 +172,6 @@
                         const html = await response.text();
                         container.innerHTML = html;
                         
-                        // Update URL without reload
                         const newUrl = `?${new URLSearchParams({
                             SearchTerm: searchInput.value,
                             CategoryId: categoryFilter.value,
@@ -190,32 +187,22 @@
                 }
             }
             
-            // Auto-submit on input change with debounce
             searchInput?.addEventListener('input', () => {
                 clearTimeout(searchTimeout);
                 searchTimeout = setTimeout(() => updateGrid(), 500);
-                
-                // Show/hide clear button
-                if (searchClear) {
-                    searchClear.style.display = searchInput.value ? 'block' : 'none';
-                }
+                if (searchClear) searchClear.style.display = searchInput.value ? 'block' : 'none';
             });
             
-            // Clear search
             searchClear?.addEventListener('click', () => {
                 searchInput.value = '';
                 searchClear.style.display = 'none';
                 updateGrid();
             });
             
-            // Auto-submit on filter change
             categoryFilter?.addEventListener('change', () => updateGrid());
             sortFilter?.addEventListener('change', () => updateGrid());
 
-            // Handle back/forward buttons
-            window.addEventListener('popstate', () => {
-                location.reload(); // Simplest way to handle history for now
-            });
+            window.addEventListener('popstate', () => location.reload());
 
             // ===== SignalR Real-time Updates =====
             const connection = new signalR.HubConnectionBuilder()
@@ -224,45 +211,64 @@
                 .build();
 
             connection.on("ReceiveCourseAdded", (course) => {
-                console.log("New course added in real-time:", course.title);
-                showToast(`New course added: ${course.title}`, 'success');
-                updateGrid(); // Refresh the grid
+                showToast(`Khóa học mới: ${course.title || course.Title}`, 'success');
+                updateGrid(); 
             });
 
             connection.on("ReceiveCourseUpdated", (course) => {
-                console.log("Course updated in real-time:", course.title);
-                showToast(`Course updated: ${course.title}`, 'info');
-                updateGrid();
+                const status = (course.status || course.Status);
+                const id = (course.id || course.Id);
+                const title = (course.title || course.Title);
+                
+                if (status === "Suspended") {
+                    const cards = document.querySelectorAll(`[data-course-id="${id}"]`);
+                    if (cards.length > 0) {
+                        cards.forEach(card => {
+                            card.style.transition = 'all 0.5s ease';
+                            card.style.opacity = '0';
+                            card.style.transform = 'scale(0.9)';
+                            setTimeout(() => card.remove(), 500);
+                        });
+                        showToast(`Khóa học "${title}" đã bị gỡ khỏi danh sách.`, 'warning');
+                    }
+                } else {
+                    showToast(`Khóa học cập nhật: ${title}`, 'info');
+                    updateGrid();
+                }
             });
 
             connection.on("ReceiveCourseDeleted", (courseId) => {
-                console.log("Course deleted:", courseId);
-                showToast("A course has been removed.", 'warning');
-                updateGrid();
+                const cards = document.querySelectorAll(`[data-course-id="${courseId}"]`);
+                cards.forEach(card => card.remove());
+                showToast("Một khóa học đã bị gỡ bỏ.", 'info');
             });
 
             connection.start()
-                .then(() => console.log("SignalR CourseHub connected."))
-                .catch(err => console.error("SignalR connection error:", err));
+                .then(() => console.log("SignalR connected."))
+                .catch(err => console.error("SignalR Connection Error: ", err));
 
-            // Toast notification helper
             function showToast(message, type) {
                 const toast = document.createElement('div');
                 toast.className = `alert alert-${type} position-fixed bottom-0 end-0 m-3 shadow-lg`;
-                toast.style.zIndex = 9999;
-                toast.innerHTML = `<i class="bi bi-bell-fill me-2"></i>${message}`;
+                toast.style.zIndex = 10000;
+                toast.style.minWidth = '300px';
+                toast.innerHTML = `<i class="bi bi-info-circle-fill me-2"></i>${message}`;
                 document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 4000);
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 500);
+                }, 5000);
             }
         });
-
-        // Add clearAllFilters to global scope for the partial view
+        
         window.clearAllFilters = function() {
-            document.getElementById('searchInput').value = '';
-            document.getElementById('categoryFilter').value = '';
-            // Trigger change manually or call updateGrid
-            const event = new Event('change');
-            document.getElementById('categoryFilter').dispatchEvent(event);
+            const searchInput = document.getElementById('searchInput');
+            const categoryFilter = document.getElementById('categoryFilter');
+            if (searchInput) searchInput.value = '';
+            if (categoryFilter) {
+                categoryFilter.value = '';
+                categoryFilter.dispatchEvent(new Event('change'));
+            }
         };
     </script>
 }

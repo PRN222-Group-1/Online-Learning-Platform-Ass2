@@ -114,6 +114,13 @@ public class AdminService(
         course.Status = "Suspended";
         await adminRepository.UpdateCourseAsync(course);
         await adminRepository.SaveChangesAsync();
+
+        if (broadcaster != null)
+        {
+            var courseVm = await GetCourseViewModelAsync(courseId);
+            if (courseVm != null) await broadcaster.BroadcastCourseUpdatedAsync(courseVm);
+        }
+
         return true;
     }
 
@@ -125,6 +132,13 @@ public class AdminService(
         course.Status = "Published";
         await adminRepository.UpdateCourseAsync(course);
         await adminRepository.SaveChangesAsync();
+
+        if (broadcaster != null)
+        {
+            var courseVm = await GetCourseViewModelAsync(courseId);
+            if (courseVm != null) await broadcaster.BroadcastCourseUpdatedAsync(courseVm);
+        }
+
         return true;
     }
 
