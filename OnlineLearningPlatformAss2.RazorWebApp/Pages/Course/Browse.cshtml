@@ -155,6 +155,16 @@
             
             let searchTimeout;
             
+            function updateCounters() {
+                const count = document.querySelectorAll('.course-card').length;
+                const heroNum = document.querySelector('.browse-hero .number');
+                const filterNum = document.querySelector('.results-count strong');
+                const filterBarCountDisplay = document.querySelector('.results-count'); // The whole "X courses" div
+                
+                if (heroNum) heroNum.textContent = count;
+                if (filterNum) filterNum.textContent = count;
+            }
+
             async function updateGrid() {
                 container.style.opacity = '0.5';
                 container.style.pointerEvents = 'none';
@@ -163,7 +173,8 @@
                     handler: 'CourseGrid',
                     SearchTerm: searchInput.value.trim(),
                     CategoryId: categoryFilter.value,
-                    SortBy: sortFilter.value
+                    SortBy: sortFilter.value,
+                    t: Date.now() // Cache buster
                 });
 
                 try {
@@ -178,6 +189,8 @@
                             SortBy: sortFilter.value
                         }).toString()}`;
                         window.history.pushState({ path: newUrl }, '', newUrl);
+                        
+                        updateCounters();
                     }
                 } catch (error) {
                     console.error('Error filtering courses:', error);
@@ -211,35 +224,73 @@
                 .build();
 
             connection.on("ReceiveCourseAdded", (course) => {
-                showToast(`Khóa học mới: ${course.title || course.Title}`, 'success');
-                updateGrid(); 
+                const status = course.status || course.Status;
+                
+                // If it is published right away, add it to the grid
+                if (status === "Published") {
+                    const price = course.price ?? course.Price ?? 0;
+                    const priceDisplay = price === 0 ? 'Miễn phí' : `${price.toLocaleString()}₫`;
+                    showToast(`Khóa học mới: ${course.title || course.Title}`, 'success');
+                    appendCourseCard(course);
+                    updateCounters();
+                }
             });
 
             connection.on("ReceiveCourseUpdated", (course) => {
-                const status = (course.status || course.Status);
-                const id = (course.id || course.Id);
-                const title = (course.title || course.Title);
-                
-                if (status === "Suspended") {
-                    const cards = document.querySelectorAll(`[data-course-id="${id}"]`);
-                    if (cards.length > 0) {
-                        cards.forEach(card => {
-                            card.style.transition = 'all 0.5s ease';
-                            card.style.opacity = '0';
-                            card.style.transform = 'scale(0.9)';
-                            setTimeout(() => card.remove(), 500);
-                        });
-                        showToast(`Khóa học "${title}" đã bị gỡ khỏi danh sách.`, 'warning');
+                const status = course.status || course.Status;
+                const id = course.id || course.Id;
+                const title = course.title || course.Title;
+
+                const card = document.querySelector(`[data-course-id="${id}"]`);
+
+                if (status !== "Published") {
+                    // Remove nếu tồn tại
+                    if (card) {
+                        card.remove();
+                        updateCounters();
+                        showToast(`Khóa học "${title}" đã được gỡ khỏi danh sách.`, 'warning');
                     }
+                    return;
+                }
+
+                // ===== status === Published =====
+
+                if (card) {
+                    // Update card
+                    const titleEl = card.querySelector('.course-title a');
+                    if (titleEl) titleEl.textContent = title;
+
+                    const descEl = card.querySelector('.course-description');
+                    if (descEl) descEl.textContent = course.description || course.Description || '';
+
+                    const instructorEl = card.querySelector('.instructor');
+                    if (instructorEl) instructorEl.innerHTML =
+                        `<i class="bi bi-person"></i> ${course.instructorName || course.InstructorName || ''}`;
+
+                    const categoryEl = card.querySelector('.course-badge .badge');
+                    if (categoryEl) categoryEl.textContent =
+                        course.categoryName || course.CategoryName || '';
+
+                    const priceEl = card.querySelector('.course-price .price');
+                    const price = course.price ?? course.Price ?? 0;
+                    if (priceEl) priceEl.textContent =
+                        price === 0 ? 'Miễn phí' : `${price.toLocaleString()}₫`;
+
+                    showToast(`Khóa học "${title}" đã được cập nhật.`, 'info');
                 } else {
-                    showToast(`Khóa học cập nhật: ${title}`, 'info');
-                    updateGrid();
+                    // Unsuspend hoặc create mới
+                    appendCourseCard(course);
+                    updateCounters();
+                    showToast(`Khóa học "${title}" đã được xuất bản.`, 'success');
                 }
             });
 
             connection.on("ReceiveCourseDeleted", (courseId) => {
                 const cards = document.querySelectorAll(`[data-course-id="${courseId}"]`);
-                cards.forEach(card => card.remove());
+                cards.forEach(card => {
+                    card.remove();
+                });
+                updateCounters();
                 showToast("Một khóa học đã bị gỡ bỏ.", 'info');
             });
 
@@ -247,18 +298,104 @@
                 .then(() => console.log("SignalR connected."))
                 .catch(err => console.error("SignalR Connection Error: ", err));
 
-            function showToast(message, type) {
-                const toast = document.createElement('div');
-                toast.className = `alert alert-${type} position-fixed bottom-0 end-0 m-3 shadow-lg`;
-                toast.style.zIndex = 10000;
-                toast.style.minWidth = '300px';
-                toast.innerHTML = `<i class="bi bi-info-circle-fill me-2"></i>${message}`;
-                document.body.appendChild(toast);
-                setTimeout(() => {
-                    toast.style.opacity = '0';
-                    setTimeout(() => toast.remove(), 500);
-                }, 5000);
-            }
+            window.appendCourseCard = function(course) {
+                const container = document.getElementById('courseGridContainer');
+                const price = course.price ?? course.Price ?? 0;
+                const priceDisplay = price === 0 ? 'Miễn phí' : `${price.toLocaleString()}₫`;
+                const id = course.id || course.Id;
+                const title = course.title || course.Title;
+                const imageUrl = course.imageUrl || course.ImageUrl;
+                const categoryName = course.categoryName || course.CategoryName || '';
+                const instructorName = course.instructorName || course.InstructorName || '';
+                const description = course.description || course.Description || '';
+                const studentCount = course.studentCount || course.StudentCount || 0;
+                
+                let gridRow = container.querySelector('.course-grid .row');
+                if (!gridRow) {
+                    container.innerHTML = `
+                        <div class="course-grid">
+                            <div class="row g-4"></div>
+                        </div>
+                    `;
+                    gridRow = container.querySelector('.course-grid .row');
+                }
+
+                const col = document.createElement('div');
+                col.className = 'col-lg-4 col-md-6';
+                col.setAttribute('data-course-id', id);
+                
+                col.innerHTML = `
+                    <div class="course-card" data-aos="fade-up">
+                        <div class="course-image">
+                            ${imageUrl ? `<img src="${imageUrl}" alt="${title}" loading="lazy">` : `<div class="course-placeholder"><i class="bi bi-book"></i></div>`}
+                            <div class="course-overlay">
+                                <a href="/Course/Details?id=${id}" class="btn-preview">
+                                    <i class="bi bi-eye"></i> View Details
+                                </a>
+                            </div>
+                            <div class="course-badge">
+                                <span class="badge bg-primary">${categoryName}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="course-content">
+                            <div class="course-meta">
+                                <span class="instructor">
+                                    <i class="bi bi-person"></i>
+                                    ${instructorName}
+                                </span>
+                                <div class="course-rating">
+                                    <div class="star-rating px-1">
+                                        <!-- Real rating handled on page reload, showing empty/default for real-time -->
+                                        <i class="bi bi-star text-warning"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <h3 class="course-title">
+                                <a href="/Course/Details?id=${id}">${title}</a>
+                            </h3>
+                            
+                            <p class="course-description">${description}</p>
+                            
+                            <div class="course-stats">
+                                <div class="stat">
+                                    <i class="bi bi-clock"></i>
+                                    <span>Self-paced</span>
+                                </div>
+                                <div class="stat">
+                                    <i class="bi bi-people"></i>
+                                    <span>${studentCount} students</span>
+                                </div>
+                                <div class="stat">
+                                    <i class="bi bi-collection"></i>
+                                    <span>Multiple modules</span>
+                                </div>
+                            </div>
+                            
+                            <div class="course-footer">
+                                <div class="course-price">
+                                    <span class="price">${priceDisplay}</span>
+                                </div>
+                                
+                                <a href="/Course/Details?id=${id}" class="btn btn-primary">
+                                    <i class="bi bi-plus"></i> Enroll Now
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                gridRow.prepend(col);
+                
+                // Add summary if it doesn't exist
+                if (!container.querySelector('.results-summary')) {
+                    const summary = document.createElement('div');
+                    summary.className = 'results-summary mt-4';
+                    summary.innerHTML = '<p>Showing <strong><span class="summary-count">1</span></strong> courses</p>';
+                    container.appendChild(summary);
+                }
+            };
         });
         
         window.clearAllFilters = function() {

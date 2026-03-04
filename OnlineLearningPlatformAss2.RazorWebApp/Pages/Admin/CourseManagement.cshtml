@@ -14,9 +14,14 @@
             <h2 class="fw-bold mb-0">Course Management</h2>
             <p class="text-muted">Monitor and manage all courses on the platform.</p>
         </div>
-        <a asp-page="/Admin/Dashboard" class="btn btn-link text-decoration-none">
-            <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
-        </a>
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary rounded-pill px-4" onclick="openCreateModal()">
+                <i class="bi bi-plus-lg me-2"></i>Add Course
+            </button>
+            <a asp-page="/Admin/Dashboard" class="btn btn-link text-decoration-none pt-2">
+                <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+            </a>
+        </div>
     </div>
 
     <div class="card admin-card shadow-sm">
@@ -35,7 +40,7 @@
                     <tbody>
                         @foreach (var course in Model.Courses)
                         {
-                            <tr>
+                            <tr data-course-id="@course.Id">
                                 <td class="ps-4">
                                     <div class="fw-bold">@course.Title</div>
                                     <div class="text-muted small">@course.CategoryName</div>
@@ -48,14 +53,31 @@
                                 </td>
                                 <td>@course.StudentCount</td>
                                 <td class="text-end pe-4">
-                                    @if (course.Status == "Published")
-                                    {
-                                        <button class="btn btn-sm btn-outline-danger" onclick="suspendCourse('@course.Id')">Suspend</button>
-                                    }
-                                    else if (course.Status == "Suspended")
-                                    {
-                                        <button class="btn btn-sm btn-outline-success" onclick="unsuspendCourse('@course.Id')">Unsuspend</button>
-                                    }
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-light border text-primary mx-1" 
+                                                onclick="openEditModal('@course.Id', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(course.Title))', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(course.Description ?? ""))', @course.Price, '@course.ImageUrl', '@course.CategoryId', '@course.InstructorId', @(course.IsFeatured ? "true" : "false"), '@course.Level', '@course.Language')"
+                                                title="Edit Course">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-light border text-info mx-1" onclick="openCurriculumModal('@course.Id', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(course.Title))')" title="Manage Curriculum">
+                                            <i class="bi bi-book"></i>
+                                        </button>
+                                        @if (course.Status == "Published")
+                                        {
+                                            <button class="btn btn-sm btn-light border text-danger mx-1" onclick="suspendCourse('@course.Id')" title="Suspend">
+                                                <i class="bi bi-pause-circle"></i>
+                                            </button>
+                                        }
+                                        else if (course.Status == "Suspended")
+                                        {
+                                            <button class="btn btn-sm btn-light border text-success mx-1" onclick="unsuspendCourse('@course.Id')" title="Unsuspend">
+                                                <i class="bi bi-play-circle"></i>
+                                            </button>
+                                        }
+                                        <button class="btn btn-sm btn-light border text-danger mx-1" onclick="deleteCourse('@course.Id')" title="Delete Permanent">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         }
@@ -66,28 +88,617 @@
     </div>
 </div>
 
+<!-- Course Modal -->
+<div class="modal fade admin-modal" id="courseModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="modalTitle">Add New Course</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="courseForm">
+                    <input type="hidden" id="courseId" name="id">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label">Course Title</label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Price (VND)</label>
+                            <input type="number" class="form-control" id="price" name="price" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Category</label>
+                            <select class="form-select" id="categoryId" name="categoryId" required>
+                                @foreach (var cat in Model.Categories)
+                                {
+                                    <option value="@cat.Id">@cat.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Instructor</label>
+                            <select class="form-select" id="instructorId" name="instructorId" required>
+                                @foreach (var inst in Model.Instructors)
+                                {
+                                    <option value="@inst.Id">@inst.Username</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Image URL</label>
+                            <input type="text" class="form-control" id="imageUrl" name="imageUrl">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Level</label>
+                            <select class="form-select" id="level" name="level">
+                                <option value="All Levels">All Levels</option>
+                                <option value="Beginner">Beginner</option>
+                                <option value="Intermediate">Intermediate</option>
+                                <option value="Advanced">Advanced</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Language</label>
+                            <input type="text" class="form-control" id="language" name="language" value="English">
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end pb-2">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="isFeatured" name="isFeatured">
+                                <label class="form-check-label" for="isFeatured">Featured Course</label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary px-4" onclick="submitCourseForm()">Save Course</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Curriculum Management Modal -->
+<div class="modal fade admin-modal" id="curriculumModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <div>
+                    <h5 class="modal-title fw-bold" id="curriculumModalTitle">Manage Course Curriculum</h5>
+                    <p class="text-muted small mb-0" id="curriculumCourseName"></p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="row g-0 h-100" style="min-height: 500px;">
+                    <!-- Sidebar: Modules -->
+                    <div class="col-md-4 border-end bg-light p-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold mb-0">Modules</h6>
+                            <button class="btn btn-sm btn-primary" onclick="openAddModule()">
+                                <i class="bi bi-plus-lg"></i>
+                            </button>
+                        </div>
+                        <div id="moduleList" class="list-group list-group-flush rounded shadow-sm overflow-auto" style="max-height: 450px;">
+                            <!-- Modules loaded here -->
+                        </div>
+                    </div>
+                    <!-- Main: Lessons -->
+                    <div class="col-md-8 p-3" id="lessonContainer" style="display:none;">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h6 class="fw-bold mb-0" id="currentModuleTitle">Module Lessons</h6>
+                                <p class="text-muted small mb-0" id="currentModuleDesc"></p>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-primary" onclick="openEditModule()">
+                                    <i class="bi bi-pencil me-1"></i>Edit Module
+                                </button>
+                                <button class="btn btn-sm btn-primary" onclick="openAddLesson()">
+                                    <i class="bi bi-plus-lg me-1"></i>Add Lesson
+                                </button>
+                            </div>
+                        </div>
+                        <div id="lessonList" class="accordion accordion-flush border rounded shadow-sm overflow-auto" style="max-height: 400px;">
+                            <!-- Lessons loaded here -->
+                        </div>
+                    </div>
+                    <div class="col-md-8 d-flex align-items-center justify-content-center text-muted" id="noModuleSelected">
+                        <div class="text-center">
+                            <i class="bi bi-folder2-open fs-1 d-block mb-2"></i>
+                            <p>Select a module to manage its lessons</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Module Modal -->
+<div class="modal fade" id="moduleItemModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="moduleModalTitle">Add Module</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="moduleForm">
+                    <input type="hidden" id="itemModuleId">
+                    <div class="mb-3">
+                        <label class="form-label">Module Title</label>
+                        <input type="text" class="form-control" id="moduleTitle" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" id="moduleDescription" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Order Index</label>
+                        <input type="number" class="form-control" id="moduleOrder" value="0">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary px-4" onclick="submitModule()">Save Module</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Lesson Modal -->
+<div class="modal fade" id="lessonItemModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="lessonModalTitle">Add Lesson</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="lessonForm">
+                    <input type="hidden" id="itemLessonId">
+                    <div class="row g-3">
+                        <div class="col-md-9">
+                            <label class="form-label">Lesson Title</label>
+                            <input type="text" class="form-control" id="lessonTitle" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Order</label>
+                            <input type="number" class="form-control" id="lessonOrder" value="0">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Content (Text or HTML)</label>
+                            <textarea class="form-control" id="lessonContent" rows="6"></textarea>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label">Video URL (YouTube/Vimeo)</label>
+                            <input type="text" class="form-control" id="lessonVideoUrl">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Duration (Minutes)</label>
+                            <input type="number" class="form-control" id="lessonDuration" value="10">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary px-4" onclick="submitLesson()">Save Lesson</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @Html.AntiForgeryToken()
 
 @section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
 <script>
-    async function suspendCourse(id) {
-        if(!confirm('Suspend this course? It will no longer be visible to students.')) return;
-        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-        const response = await fetch(`?handler=Suspend&id=${id}`, {
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("/hubs/course")
+        .withAutomaticReconnect()
+        .build();
+
+    connection.on("ReceiveCourseAdded", (course) => {
+        showToast(`Course "${course.title}" was added`, 'success');
+        addTableRow(course);
+    });
+
+    connection.on("ReceiveCourseUpdated", (course) => {
+        showToast(`Course "${course.title}" was updated`, 'info');
+        updateTableRow(course);
+    });
+
+    connection.on("ReceiveCourseDeleted", (courseId) => {
+        showToast("Course deleted", 'warning');
+        const row = document.querySelector(`tr[data-course-id="${courseId}"]`);
+        if (row) row.remove();
+    });
+
+    connection.start().catch(err => console.error(err.toString()));
+
+    const antiforgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+    async function ajaxPost(handler, params = {}, body = null) {
+        let url = `?handler=${handler}`;
+        if (Object.keys(params).length > 0) {
+            const searchParams = new URLSearchParams(params);
+            url += `&${searchParams.toString()}`;
+        }
+
+        const options = {
             method: 'POST',
-            headers: { 'RequestVerificationToken': token }
-        });
-        if (response.ok) location.reload();
+            headers: {
+                'RequestVerificationToken': antiforgeryToken
+            }
+        };
+
+        if (body) {
+            options.headers['Content-Type'] = 'application/json';
+            options.body = JSON.stringify(body);
+        }
+
+        const response = await fetch(url, options);
+        if (!response.ok) throw new Error(await response.text());
+        return await response.json();
+    }
+
+    let isEditMode = false;
+
+    function openCreateModal() {
+        isEditMode = false;
+        document.getElementById('modalTitle').innerText = 'Add New Course';
+        document.getElementById('courseForm').reset();
+        document.getElementById('courseId').value = '';
+        new bootstrap.Modal(document.getElementById('courseModal')).show();
+    }
+
+    function openEditModal(id, title, desc, price, img, catId, instId, featured, level, lang) {
+        isEditMode = true;
+        document.getElementById('modalTitle').innerText = 'Edit Course';
+        document.getElementById('courseId').value = id;
+        document.getElementById('title').value = title;
+        document.getElementById('description').value = desc;
+        document.getElementById('price').value = price;
+        document.getElementById('imageUrl').value = img;
+        document.getElementById('categoryId').value = catId;
+        document.getElementById('instructorId').value = instId;
+        document.getElementById('isFeatured').checked = featured;
+        document.getElementById('level').value = level;
+        document.getElementById('language').value = lang;
+        new bootstrap.Modal(document.getElementById('courseModal')).show();
+    }
+
+    async function submitCourseForm() {
+        const form = document.getElementById('courseForm');
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+        data.isFeatured = document.getElementById('isFeatured').checked;
+        data.price = parseFloat(data.price);
+
+        try {
+            if (isEditMode) {
+                await ajaxPost('UpdateCourse', { id: data.id }, {
+                    title: data.title,
+                    description: data.description,
+                    price: data.price,
+                    imageUrl: data.imageUrl,
+                    categoryId: data.categoryId,
+                    isFeatured: data.isFeatured,
+                    level: data.level,
+                    language: data.language
+                });
+                showToast("Course profile updated", 'success');
+            } else {
+                await ajaxPost('CreateCourse', {}, {
+                    title: data.title,
+                    description: data.description,
+                    price: data.price,
+                    imageUrl: data.imageUrl,
+                    categoryId: data.categoryId,
+                    instructorId: data.instructorId,
+                    isFeatured: data.isFeatured,
+                    level: data.level,
+                    language: data.language
+                });
+                bootstrap.Modal.getInstance(document.getElementById('courseModal')).hide();
+                showToast("Course created successfully", 'success');
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Error: " + err.message);
+        }
+    }
+
+    async function deleteCourse(id) {
+        if(!confirm('PERMANENT DELETE: Are you sure?')) return;
+        try {
+            await ajaxPost('DeleteCourse', { id });
+        } catch (err) {
+            alert("Error: " + err.message);
+        }
+    }
+
+    async function suspendCourse(id) {
+        if(!confirm('Suspend this course?')) return;
+        try {
+            await ajaxPost('Suspend', { id });
+        } catch (err) {
+            alert("Error: " + err.message);
+        }
     }
 
     async function unsuspendCourse(id) {
-        if(!confirm('Restore this course to Published status?')) return;
-        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-        const response = await fetch(`?handler=Unsuspend&id=${id}`, {
-            method: 'POST',
-            headers: { 'RequestVerificationToken': token }
+        if(!confirm('Restore this course?')) return;
+        try {
+            await ajaxPost('Unsuspend', { id });
+        } catch (err) {
+            alert("Error: " + err.message);
+        }
+    }
+
+    function updateTableRow(course) {
+        const row = document.querySelector(`tr[data-course-id="${course.id}"]`);
+        if (!row) return;
+
+        const encodedTitle = escapeJS(course.title);
+        const encodedDesc = escapeJS(course.description || "");
+        
+        row.innerHTML = `
+            <td class="ps-4">
+                <div class="fw-bold">${course.title}</div>
+                <div class="text-muted small">${course.categoryName}</div>
+            </td>
+            <td>${course.instructorName}</td>
+            <td>${getStatusBadge(course.status)}</td>
+            <td>${course.studentCount}</td>
+            <td class="text-end pe-4">
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-light border text-primary mx-1" 
+                            onclick="openEditModal('${course.id}', '${encodedTitle}', '${encodedDesc}', ${course.price}, '${course.imageUrl || ""}', '${course.categoryId}', '${course.instructorId}', ${course.isFeatured}, '${course.level}', '${course.language}')"
+                            title="Edit Course">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-light border text-info mx-1" onclick="openCurriculumModal('${course.id}', '${encodedTitle}')" title="Manage Curriculum">
+                        <i class="bi bi-book"></i>
+                    </button>
+                    ${getActionButtons(course)}
+                    <button class="btn btn-sm btn-light border text-danger mx-1" onclick="deleteCourse('${course.id}')" title="Delete Permanent">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+    }
+
+    // Curriculum Logic
+    let currentCourseId = null;
+    let currentModuleId = null;
+    let curriculumData = [];
+
+    async function openCurriculumModal(courseId, courseTitle) {
+        currentCourseId = courseId;
+        currentModuleId = null;
+        document.getElementById('curriculumCourseName').textContent = courseTitle;
+        document.getElementById('lessonContainer').style.display = 'none';
+        document.getElementById('noModuleSelected').style.display = 'flex';
+        await loadCurriculum();
+        new bootstrap.Modal(document.getElementById('curriculumModal')).show();
+    }
+
+    async function loadCurriculum() {
+        try {
+            const response = await fetch(`?handler=Curriculum&courseId=${currentCourseId}`);
+            curriculumData = await response.json();
+            renderModules();
+            if (currentModuleId) {
+                renderLessons(currentModuleId);
+            }
+        } catch (err) {
+            console.error("Failed to load curriculum:", err);
+        }
+    }
+
+    function renderModules() {
+        const list = document.getElementById('moduleList');
+        list.innerHTML = '';
+        if (curriculumData.length === 0) {
+            list.innerHTML = '<div class="p-3 text-center text-muted small">No modules found</div>';
+            return;
+        }
+
+        curriculumData.forEach(module => {
+            const btn = document.createElement('button');
+            btn.className = `list-group-item list-group-item-action border-0 mb-1 rounded ${currentModuleId === module.id ? 'active' : ''}`;
+            btn.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="fw-bold text-truncate me-2">${module.title}</span>
+                    <i class="bi bi-chevron-right small"></i>
+                </div>
+            `;
+            btn.onclick = () => selectModule(module.id);
+            list.appendChild(btn);
         });
-        if (response.ok) location.reload();
+    }
+
+    function selectModule(moduleId) {
+        currentModuleId = moduleId;
+        renderModules();
+        document.getElementById('noModuleSelected').style.display = 'none';
+        document.getElementById('lessonContainer').style.display = 'block';
+        renderLessons(moduleId);
+    }
+
+    function renderLessons(moduleId) {
+        const module = curriculumData.find(m => m.id === moduleId);
+        if (!module) return;
+
+        document.getElementById('currentModuleTitle').textContent = module.title;
+        document.getElementById('currentModuleDesc').textContent = module.description || 'No description';
+        
+        const list = document.getElementById('lessonList');
+        list.innerHTML = '';
+
+        if (module.lessons.length === 0) {
+            list.innerHTML = '<div class="p-4 text-center text-muted">No lessons in this module</div>';
+            return;
+        }
+
+        module.lessons.forEach((lesson, index) => {
+            const item = document.createElement('div');
+            item.className = 'accordion-item border-0 border-bottom';
+            item.innerHTML = `
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#lessonCollapse${index}">
+                        <div class="d-flex align-items-center w-100">
+                            <span class="badge bg-light text-dark me-2">${lesson.orderIndex}</span>
+                            <span class="text-truncate">${lesson.title}</span>
+                            <div class="ms-auto me-3 d-flex gap-2">
+                                <span class="badge bg-info-subtle text-info rounded-pill">${lesson.duration}m</span>
+                                <span class="badge bg-secondary-subtle text-secondary rounded-pill">${lesson.videoUrl ? 'Video' : 'Text'}</span>
+                            </div>
+                        </div>
+                    </button>
+                </h2>
+                <div id="lessonCollapse${index}" class="accordion-collapse collapse" data-bs-parent="#lessonList">
+                    <div class="accordion-body bg-light-subtle small">
+                        <div class="mb-2">${lesson.content ? lesson.content.substring(0, 100) + '...' : 'No content'}</div>
+                        <div class="d-flex gap-2 justify-content-end">
+                            <button class="btn btn-sm btn-outline-primary" onclick='openEditLesson(${JSON.stringify(lesson)})'>
+                                <i class="bi bi-pencil me-1"></i>Edit
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteLesson('${lesson.id}')">
+                                <i class="bi bi-trash me-1"></i>Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            list.appendChild(item);
+        });
+    }
+
+    // Module CRUD UI
+    function openAddModule() {
+        document.getElementById('moduleModalTitle').textContent = 'Add Module';
+        document.getElementById('moduleForm').reset();
+        document.getElementById('itemModuleId').value = '';
+        document.getElementById('moduleOrder').value = curriculumData.length + 1;
+        new bootstrap.Modal(document.getElementById('moduleItemModal')).show();
+    }
+
+    function openEditModule() {
+        const module = curriculumData.find(m => m.id === currentModuleId);
+        if (!module) return;
+        document.getElementById('moduleModalTitle').textContent = 'Edit Module';
+        document.getElementById('itemModuleId').value = module.id;
+        document.getElementById('moduleTitle').value = module.title;
+        document.getElementById('moduleDescription').value = module.description;
+        document.getElementById('moduleOrder').value = module.orderIndex;
+        new bootstrap.Modal(document.getElementById('moduleItemModal')).show();
+    }
+
+    async function submitModule() {
+        const title = document.getElementById('moduleTitle').value;
+        const desc = document.getElementById('moduleDescription').value;
+        const order = parseInt(document.getElementById('moduleOrder').value);
+        const id = document.getElementById('itemModuleId').value;
+
+        try {
+            if (id) {
+                await ajaxPost('UpdateModule', { moduleId: id, title, description: desc, orderIndex: order });
+            } else {
+                await ajaxPost('AddModule', { courseId: currentCourseId, title, description: desc, orderIndex: order });
+            }
+            bootstrap.Modal.getInstance(document.getElementById('moduleItemModal')).hide();
+            await loadCurriculum();
+            showToast("Module saved successfully", "success");
+        } catch (err) { alert(err.message); }
+    }
+
+    // Lesson CRUD UI
+    function openAddLesson() {
+        document.getElementById('lessonModalTitle').textContent = 'Add Lesson';
+        document.getElementById('lessonForm').reset();
+        document.getElementById('itemLessonId').value = '';
+        const module = curriculumData.find(m => m.id === currentModuleId);
+        document.getElementById('lessonOrder').value = module.lessons.length + 1;
+        new bootstrap.Modal(document.getElementById('lessonItemModal')).show();
+    }
+
+    window.openEditLesson = function(lesson) {
+        document.getElementById('lessonModalTitle').textContent = 'Edit Lesson';
+        document.getElementById('itemLessonId').value = lesson.id;
+        document.getElementById('lessonTitle').value = lesson.title;
+        document.getElementById('lessonContent').value = lesson.content;
+        document.getElementById('lessonVideoUrl').value = lesson.videoUrl || '';
+        document.getElementById('lessonDuration').value = lesson.duration;
+        document.getElementById('lessonOrder').value = lesson.orderIndex;
+        new bootstrap.Modal(document.getElementById('lessonItemModal')).show();
+    }
+
+    async function submitLesson() {
+        const id = document.getElementById('itemLessonId').value;
+        const title = document.getElementById('lessonTitle').value;
+        const content = document.getElementById('lessonContent').value;
+        const video = document.getElementById('lessonVideoUrl').value;
+        const duration = parseInt(document.getElementById('lessonDuration').value);
+        const order = parseInt(document.getElementById('lessonOrder').value);
+
+        try {
+            if (id) {
+                await ajaxPost('UpdateLesson', { lessonId: id, title, content, videoUrl: video, duration, orderIndex: order });
+            } else {
+                await ajaxPost('AddLesson', { moduleId: currentModuleId, title, content, videoUrl: video, duration, orderIndex: order });
+            }
+            bootstrap.Modal.getInstance(document.getElementById('lessonItemModal')).hide();
+            await loadCurriculum();
+            showToast("Lesson saved successfully", "success");
+        } catch (err) { alert(err.message); }
+    }
+
+    async function deleteLesson(id) {
+        if (!confirm("Are you sure you want to delete this lesson?")) return;
+        try {
+            await ajaxPost('DeleteLesson', { lessonId: id });
+            await loadCurriculum();
+            showToast("Lesson deleted", "warning");
+        } catch (err) { alert(err.message); }
+    }
+
+    function addTableRow(course) {
+        const tbody = document.querySelector('table tbody');
+        const tr = document.createElement('tr');
+        tr.setAttribute('data-course-id', course.id);
+        tbody.prepend(tr);
+        updateTableRow(course);
+    }
+
+    function getStatusBadge(status) {
+        if (status === 'Published') return '<span class="badge bg-success bg-opacity-10 text-success">PUBLISHED</span>';
+        if (status === 'Suspended') return '<span class="badge bg-dark">SUSPENDED</span>';
+        return `<span class="badge bg-secondary">${status.toUpperCase()}</span>`;
+    }
+
+    function getActionButtons(course) {
+        if (course.status === 'Published') {
+            return `<button class="btn btn-sm btn-light border text-danger mx-1" onclick="suspendCourse('${course.id}')" title="Suspend"><i class="bi bi-pause-circle"></i></button>`;
+        } else if (course.status === 'Suspended') {
+            return `<button class="btn btn-sm btn-light border text-success mx-1" onclick="unsuspendCourse('${course.id}')" title="Unsuspend"><i class="bi bi-play-circle"></i></button>`;
+        }
+        return '';
+    }
+
+    function escapeJS(str) {
+        return str ? str.replace(/'/g, "\\'").replace(/"/g, '\\"') : "";
     }
 </script>
 }

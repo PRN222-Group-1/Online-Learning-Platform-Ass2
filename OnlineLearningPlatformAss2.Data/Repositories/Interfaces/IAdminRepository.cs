@@ -18,7 +18,9 @@ public interface IAdminRepository
     Task<IEnumerable<Course>> GetAllCoursesAsync();
     Task<Course?> GetCourseByIdAsync(Guid courseId);
     Task<Course?> GetCourseWithDetailsAsync(Guid courseId);
+    Task AddCourseAsync(Course course);
     Task UpdateCourseAsync(Course course);
+    Task DeleteCourseAsync(Course course);
     
     // Users
     Task<bool> HasActiveStudentsAsync(Guid instructorId);

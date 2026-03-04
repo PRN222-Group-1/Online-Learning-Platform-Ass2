@@ -22,6 +22,9 @@ public class CourseViewModel
     public int TotalLessons { get; set; }
     public string FormattedDuration { get; set; } = "0h 0m";
     public string Language { get; set; } = "English";
+    public string Level { get; set; } = "All Levels";
+    public Guid CategoryId { get; set; }
+    public Guid InstructorId { get; set; }
     public string Status { get; set; } = "Published";
     public string? RejectionReason { get; set; }
 }

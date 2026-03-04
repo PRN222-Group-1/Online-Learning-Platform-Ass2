@@ -85,6 +85,11 @@
                                                 title="@(user.IsActive ? "Suspend User" : "Activate User")">
                                             <i class="bi @(user.IsActive ? "bi-person-slash" : "bi-person-check")"></i>
                                         </button>
+                                        <button class="btn btn-sm btn-light border text-primary mx-1" 
+                                                onclick="resetPassword('@user.Id')" 
+                                                title="Reset Password">
+                                            <i class="bi bi-shield-lock"></i>
+                                        </button>
                                         <button class="btn btn-sm btn-light border text-danger mx-1" 
                                                 onclick="deleteUser('@user.Id')" @(user.Username == "admin" ? "disabled" : "")
                                                 title="Delete User">
@@ -141,10 +146,74 @@
     </div>
 </div>
 
+<!-- Reset Password Modal -->
+<div class="modal fade admin-modal" id="resetPasswordModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Reset Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="resetPasswordForm">
+                    <input type="hidden" id="resetUserId" name="userId">
+                    <div class="mb-3">
+                        <label class="form-label">New Password</label>
+                        <input type="password" class="form-control" id="newPassword" name="newPassword" required>
+                        <div class="form-text">Choose a strong password for this user.</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary px-4" onclick="submitResetPassword()">Reset Password</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @Html.AntiForgeryToken()
 
 @section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
 <script>
+    // SignalR Connection
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("/hubs/admin")
+        .withAutomaticReconnect()
+        .build();
+
+    connection.on("ReceiveUserAdded", (user) => {
+        // Simple approach: reload or append. Append is better for "CRUD over SignalR"
+        location.reload(); 
+    });
+
+    connection.on("ReceiveUserRoleChanged", (userId, newRole) => {
+        const row = document.querySelector(`tr:has(span:contains("ID: ${userId.substring(0, 8)}"))`) || 
+                    document.querySelector(`select[onchange*="${userId}"]`)?.closest('tr');
+        if (row) {
+            const select = row.querySelector('select');
+            if (select) select.value = newRole;
+            showToast(`User role updated to ${newRole}`, 'success');
+        } else {
+            location.reload();
+        }
+    });
+
+    connection.on("ReceiveUserStatusToggled", (userId, isActive) => {
+        location.reload(); // Complex to toggle all buttons and badges via JS, reload is safer for now but we can refine
+    });
+
+    connection.on("ReceiveUserDeleted", (userId) => {
+        location.reload();
+    });
+
+    connection.on("ReceiveUserPasswordReset", (userId) => {
+        showToast("Password has been reset successfully", 'success');
+    });
+
+    connection.start().catch(err => console.error(err.toString()));
+
     // Search Functionality
     const searchInput = document.getElementById('userSearchInput');
     let debounceTimer;
@@ -159,48 +228,88 @@
 
     async function toggleStatus(id) {
         if(!confirm('Are you sure you want to change this user\'s status?')) return;
-        const response = await fetch(`?handler=ToggleStatus&id=${id}`, {
-            method: 'POST',
-            headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() }
-        });
-        if (response.ok) { location.reload(); }
+        try {
+            await connection.invoke("ToggleUserStatus", id);
+        } catch (err) {
+            console.error(err);
+            alert("Error toggling status: " + err.message);
+        }
     }
 
     async function changeRole(id, role) {
         if(!confirm(`Change user role to ${role}?`)) { location.reload(); return; }
-        const response = await fetch(`?handler=ChangeRole&id=${id}&role=${role}`, {
-            method: 'POST',
-            headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() }
-        });
-        if (response.ok) { location.reload(); }
-        else { alert('Failed to change role'); location.reload(); }
+        try {
+            await connection.invoke("ChangeUserRole", id, role);
+        } catch (err) {
+            console.error(err);
+            alert("Error changing role: " + err.message);
+            location.reload();
+        }
     }
 
     async function deleteUser(id) {
         if(!confirm('PERMANENT DELETE: Are you sure? This action cannot be undone.')) return;
-        const response = await fetch(`?handler=DeleteUser&id=${id}`, {
-            method: 'POST',
-            headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() }
-        });
-        if (response.ok) { location.reload(); }
-        else { alert('Failed to delete user'); }
+        try {
+            await connection.invoke("DeleteUser", id);
+        } catch (err) {
+            console.error(err);
+            alert("Error deleting user: " + err.message);
+        }
     }
 
     async function submitAddUser() {
         const form = document.getElementById('addUserForm');
         const formData = new FormData(form);
+        const username = formData.get('username');
+        const email = formData.get('email');
+        const password = formData.get('password');
+        const role = formData.get('role');
         
-        const response = await fetch(`?handler=AddUser`, {
-            method: 'POST',
-            body: formData,
-            headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() }
-        });
-        
-        if (response.ok) {
-            location.reload();
-        } else {
-            alert('Failed to add user. Check if username/email already exists.');
+        try {
+            await connection.invoke("AddUser", username, email, password, role);
+            bootstrap.Modal.getInstance(document.getElementById('addUserModal')).hide();
+            form.reset();
+        } catch (err) {
+            console.error(err);
+            alert('Failed to add user: ' + err.message);
         }
+    }
+
+    function resetPassword(id) {
+        document.getElementById('resetUserId').value = id;
+        document.getElementById('newPassword').value = '';
+        new bootstrap.Modal(document.getElementById('resetPasswordModal')).show();
+    }
+
+    async function submitResetPassword() {
+        const userId = document.getElementById('resetUserId').value;
+        const newPassword = document.getElementById('newPassword').value;
+        
+        if (!newPassword) {
+            alert('Please enter a new password');
+            return;
+        }
+        
+        try {
+            await connection.invoke("ResetUserPassword", userId, newPassword);
+            bootstrap.Modal.getInstance(document.getElementById('resetPasswordModal')).hide();
+            showToast("Password reset request sent", 'info');
+        } catch (err) {
+            console.error(err);
+            alert('Failed to reset password: ' + err.message);
+        }
+    }
+
+    function showToast(message, type) {
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type} position-fixed bottom-0 end-0 m-3 shadow-lg`;
+        toast.style.zIndex = 10000;
+        toast.innerHTML = `<i class="bi bi-info-circle-fill me-2"></i>${message}`;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 500);
+        }, 3000);
     }
 </script>
 }

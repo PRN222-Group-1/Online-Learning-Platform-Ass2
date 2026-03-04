@@ -77,14 +77,26 @@ public class AdminRepository(OnlineLearningSystemDbContext context) : IAdminRepo
     public async Task<Course?> GetCourseWithDetailsAsync(Guid courseId)
     {
         return await context.Courses
+            .AsNoTracking()
             .Include(c => c.Category)
             .Include(c => c.Instructor)
             .FirstOrDefaultAsync(c => c.CourseId == courseId);
     }
 
+    public async Task AddCourseAsync(Course course)
+    {
+        await context.Courses.AddAsync(course);
+    }
+
     public async Task UpdateCourseAsync(Course course)
     {
         context.Courses.Update(course);
+        await Task.CompletedTask;
+    }
+
+    public async Task DeleteCourseAsync(Course course)
+    {
+        context.Courses.Remove(course);
         await Task.CompletedTask;
     }
 
