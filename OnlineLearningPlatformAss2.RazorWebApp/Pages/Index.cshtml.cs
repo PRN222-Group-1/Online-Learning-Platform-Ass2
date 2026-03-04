@@ -69,7 +69,7 @@ public class IndexModel : PageModel
         
         if (ViewAll || !string.IsNullOrEmpty(SearchTerm))
         {
-            allCourses = await _courseService.GetAllCoursesAsync(SearchTerm, userId);
+            allCourses = await _courseService.GetAllCoursesAsync(SearchTerm, null);
         }
         else
         {

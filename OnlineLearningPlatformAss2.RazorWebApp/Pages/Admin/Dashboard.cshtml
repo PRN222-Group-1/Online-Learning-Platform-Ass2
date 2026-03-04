@@ -44,7 +44,7 @@
                     </div>
                     <span class="card-title-admin text-white opacity-75">Net Profit (30%)</span>
                 </div>
-                <h2 class="admin-stat-value mb-0 text-white">@Model.Stats.TotalNetProfit.ToString("C")</h2>
+                <h2 class="admin-stat-value mb-0 text-white">@Model.Stats.TotalNetProfit.ToString("N0") ₫</h2>
                 <p class="small mb-0 mt-2 opacity-75">Platform commission</p>
             </div>
         </div>
@@ -56,7 +56,7 @@
                     </div>
                     <span class="card-title-admin">Gross Revenue</span>
                 </div>
-                <h2 class="admin-stat-value mb-0">@Model.Stats.TotalRevenue.ToString("C")</h2>
+                <h2 class="admin-stat-value mb-0">@Model.Stats.TotalRevenue.ToString("N0") ₫</h2>
                 <p class="text-success fw-bold small mb-0 mt-2"><i class="bi bi-arrow-up-right me-1"></i>+12.5%</p>
             </div>
         </div>
@@ -130,7 +130,7 @@
                                             </div>
                                         </td>
                                         <td>@order.ItemTitle</td>
-                                        <td class="fw-bold text-dark">@order.Amount.ToString("C")</td>
+                                        <td class="fw-bold text-dark">@order.Amount.ToString("N0") ₫</td>
                                         <td class="text-muted small">@order.CreatedAt.ToString("MMM dd, yyyy")</td>
                                         <td class="text-end pe-4">
                                             <span class="badge badge-admin badge-active rounded-pill">COMPLETED</span>
