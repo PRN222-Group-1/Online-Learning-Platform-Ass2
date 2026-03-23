@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using OnlineLearningPlatformAss2.RazorWebApp.Hubs;
 using OnlineLearningPlatformAss2.Data.Repositories;
 using OnlineLearningPlatformAss2.Data.Repositories.Interfaces;
+using OnlineLearningPlatformAss2.RazorWebApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -63,7 +64,8 @@ builder.Services.AddScoped<IDiscussionService, DiscussionService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
-builder.Services.AddScoped<ICourseUpdateBroadcaster, OnlineLearningPlatformAss2.RazorWebApp.Services.SignalRCourseUpdateBroadcaster>();
+builder.Services.AddSingleton<ICourseUpdateBroadcaster, SignalRCourseUpdateBroadcaster>();
+builder.Services.AddSingleton<IAdminUpdateBroadcaster, SignalRAdminUpdateBroadcaster>();
 builder.Services.AddHttpClient<ITranscriptService, TranscriptService>(client =>
 {
     client.Timeout = Timeout.InfiniteTimeSpan;
@@ -107,6 +109,7 @@ app.MapControllers();
 app.MapHub<CourseHub>("/hubs/course");
 app.MapHub<ChatHub>("/hubs/chat");
 app.MapHub<TranscriptHub>("/hubs/transcript");
+app.MapHub<AdminHub>("/hubs/admin");
 
 app.Run();
 

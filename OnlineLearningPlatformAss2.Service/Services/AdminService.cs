@@ -12,7 +12,8 @@ public class AdminService(
     IUserRepository userRepository,
     ICourseRepository courseRepository,
     INotificationService notificationService,
-    ICourseUpdateBroadcaster? broadcaster = null) : IAdminService
+    ICourseUpdateBroadcaster? broadcaster = null,
+    IAdminUpdateBroadcaster? adminBroadcaster = null) : IAdminService
 {
     public async Task<AdminStatsDto> GetStatsAsync()
     {
@@ -177,6 +178,11 @@ public class AdminService(
                 Price = c.Price,
                 CategoryName = c.Category.Name,
                 InstructorName = c.Instructor.Username,
+                InstructorId = c.InstructorId,
+                CategoryId = c.CategoryId,
+                Description = c.Description ?? "",
+                Level = c.Level,
+                Language = c.Language,
                 ImageUrl = c.ImageUrl,
                 Status = c.Status,
                 StudentCount = await courseRepository.GetEnrollmentCountAsync(c.CourseId)
@@ -208,6 +214,11 @@ public class AdminService(
         user.IsActive = !user.IsActive;
         await userRepository.UpdateAsync(user);
         await userRepository.SaveChangesAsync();
+
+        if (adminBroadcaster != null)
+        {
+            await adminBroadcaster.BroadcastUserStatusToggledAsync(userId, user.IsActive);
+        }
         return true;
     }
 
@@ -222,6 +233,11 @@ public class AdminService(
         user.RoleId = role.Id;
         await userRepository.UpdateAsync(user);
         await userRepository.SaveChangesAsync();
+
+        if (adminBroadcaster != null)
+        {
+            await adminBroadcaster.BroadcastUserRoleChangedAsync(userId, roleName);
+        }
         return true;
     }
 
@@ -238,6 +254,11 @@ public class AdminService(
 
         await userRepository.RemoveAsync(user);
         await userRepository.SaveChangesAsync();
+
+        if (adminBroadcaster != null)
+        {
+            await adminBroadcaster.BroadcastUserDeletedAsync(userId);
+        }
         return true;
     }
 
@@ -355,11 +376,181 @@ public class AdminService(
             Price = course.Price,
             CategoryName = course.Category.Name,
             InstructorName = course.Instructor.Username,
+            InstructorId = course.InstructorId,
+            CategoryId = course.CategoryId,
+            Description = course.Description ?? "",
+            Level = course.Level,
+            Language = course.Language,
             ImageUrl = course.ImageUrl,
+            IsFeatured = course.IsFeatured,
             Status = course.Status,
             Language = course.Language,
             RejectionReason = course.RejectionReason,
             StudentCount = await courseRepository.GetEnrollmentCountAsync(course.CourseId)
         };
+    }
+
+    public async Task<IEnumerable<CourseModuleDto>> GetCourseCurriculumAsync(Guid courseId)
+    {
+        var course = await courseRepository.GetByIdWithDetailsAsync(courseId);
+        if (course == null) return Enumerable.Empty<CourseModuleDto>();
+
+        return course.Modules.OrderBy(m => m.OrderIndex).Select(m => new CourseModuleDto
+        {
+            Id = m.ModuleId,
+            Title = m.Title,
+            Description = m.Description ?? "",
+            OrderIndex = m.OrderIndex,
+            Lessons = m.Lessons.OrderBy(l => l.OrderIndex).Select(l => new CourseLessonDto
+            {
+                Id = l.LessonId,
+                Title = l.Title,
+                Content = l.Content ?? "",
+                VideoUrl = l.VideoUrl,
+                Duration = l.Duration ?? 0,
+                OrderIndex = l.OrderIndex,
+                IsPreview = false // Default for admin view
+            }).ToList()
+        });
+    }
+
+    public async Task<bool> AddModuleAsync(Guid courseId, string title, string description, int orderIndex)
+    {
+        var module = new Module
+        {
+            ModuleId = Guid.NewGuid(),
+            CourseId = courseId,
+            Title = title,
+            Description = description,
+            OrderIndex = orderIndex,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await courseRepository.AddModuleAsync(module);
+        await courseRepository.SaveChangesAsync();
+
+        if (broadcaster != null)
+        {
+            var courseVm = await GetCourseViewModelAsync(courseId);
+            if (courseVm != null) await broadcaster.BroadcastCourseUpdatedAsync(courseVm);
+        }
+
+        return true;
+    }
+
+    public async Task<bool> UpdateModuleAsync(Guid moduleId, string title, string description, int orderIndex)
+    {
+        var module = await courseRepository.GetModuleByIdAsync(moduleId);
+        if (module == null) return false;
+
+        module.Title = title;
+        module.Description = description;
+        module.OrderIndex = orderIndex;
+
+        await courseRepository.UpdateModuleAsync(module);
+        await courseRepository.SaveChangesAsync();
+
+        if (broadcaster != null)
+        {
+            var courseVm = await GetCourseViewModelAsync(module.CourseId);
+            if (courseVm != null) await broadcaster.BroadcastCourseUpdatedAsync(courseVm);
+        }
+
+        return true;
+    }
+
+    public async Task<bool> DeleteModuleAsync(Guid moduleId)
+    {
+        var module = await courseRepository.GetModuleByIdAsync(moduleId);
+        if (module == null) return false;
+
+        var courseId = module.CourseId;
+        await courseRepository.RemoveModuleAsync(module);
+        await courseRepository.SaveChangesAsync();
+
+        if (broadcaster != null)
+        {
+            var courseVm = await GetCourseViewModelAsync(courseId);
+            if (courseVm != null) await broadcaster.BroadcastCourseUpdatedAsync(courseVm);
+        }
+
+        return true;
+    }
+
+    public async Task<bool> AddLessonAsync(Guid moduleId, string title, string content, string? videoUrl, int duration, int orderIndex)
+    {
+        var module = await courseRepository.GetModuleByIdAsync(moduleId);
+        if (module == null) return false;
+
+        var lesson = new Lesson
+        {
+            LessonId = Guid.NewGuid(),
+            ModuleId = moduleId,
+            Title = title,
+            Content = content,
+            VideoUrl = videoUrl,
+            Type = string.IsNullOrEmpty(videoUrl) ? "Text" : "Video",
+            Duration = duration,
+            OrderIndex = orderIndex,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await courseRepository.AddLessonAsync(lesson);
+        await courseRepository.SaveChangesAsync();
+
+        if (broadcaster != null)
+        {
+            var courseVm = await GetCourseViewModelAsync(module.CourseId);
+            if (courseVm != null) await broadcaster.BroadcastCourseUpdatedAsync(courseVm);
+        }
+
+        return true;
+    }
+
+    public async Task<bool> UpdateLessonAsync(Guid lessonId, string title, string content, string? videoUrl, int duration, int orderIndex)
+    {
+        var lesson = await courseRepository.GetLessonByIdAsync(lessonId);
+        if (lesson == null) return false;
+
+        var module = await courseRepository.GetModuleByIdAsync(lesson.ModuleId);
+        if (module == null) return false;
+
+        lesson.Title = title;
+        lesson.Content = content;
+        lesson.VideoUrl = videoUrl;
+        lesson.Type = string.IsNullOrEmpty(videoUrl) ? "Text" : "Video";
+        lesson.Duration = duration;
+        lesson.OrderIndex = orderIndex;
+
+        await courseRepository.UpdateLessonAsync(lesson);
+        await courseRepository.SaveChangesAsync();
+
+        if (broadcaster != null)
+        {
+            var courseVm = await GetCourseViewModelAsync(module.CourseId);
+            if (courseVm != null) await broadcaster.BroadcastCourseUpdatedAsync(courseVm);
+        }
+
+        return true;
+    }
+
+    public async Task<bool> DeleteLessonAsync(Guid lessonId)
+    {
+        var lesson = await courseRepository.GetLessonByIdAsync(lessonId);
+        if (lesson == null) return false;
+
+        var module = await courseRepository.GetModuleByIdAsync(lesson.ModuleId);
+        if (module == null) return false;
+
+        await courseRepository.RemoveLessonAsync(lesson);
+        await courseRepository.SaveChangesAsync();
+
+        if (broadcaster != null)
+        {
+            var courseVm = await GetCourseViewModelAsync(module.CourseId);
+            if (courseVm != null) await broadcaster.BroadcastCourseUpdatedAsync(courseVm);
+        }
+
+        return true;
     }
 }

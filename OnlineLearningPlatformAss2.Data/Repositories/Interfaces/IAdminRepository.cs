@@ -20,7 +20,9 @@ public interface IAdminRepository
     Task<IEnumerable<Course>> GetAllCoursesAsync();
     Task<Course?> GetCourseByIdAsync(Guid courseId);
     Task<Course?> GetCourseWithDetailsAsync(Guid courseId);
+    Task AddCourseAsync(Course course);
     Task UpdateCourseAsync(Course course);
+    Task DeleteCourseAsync(Course course);
     
     // Categories & Instructors
     Task<IEnumerable<Category>> GetAllCategoriesAsync();

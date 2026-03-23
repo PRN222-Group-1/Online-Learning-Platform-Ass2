@@ -1,110 +1,65 @@
 # OnlineLearningPlatformAss2 - Razor Pages Edition
 
-An ASP.NET Core Razor Pages web application for online learning management, converted from the original MVC architecture.
+An ASP.NET Core Razor Pages web application for online learning management, focusing on real-time curriculum management and clean architecture.
 
-## ?? Technology Stack
+## 🚀 Key Features
 
-- **.NET 9.0** - Latest .NET framework
-- **ASP.NET Core Razor Pages** - Server-side rendering web framework
-- **C#** - Primary programming language
-- **Entity Framework Core** - Data access and ORM
-- **SQL Server** - Database
-- **Bootstrap** - Frontend CSS framework
-- **jQuery** - JavaScript library
-- **SignalR** - Real-time communication
+- **Real-time Course Management**: Publish/Suspend/Update courses with instant notification to students.
+- **Curriculum System**: Structured management of modules and lessons with video and text support.
+- **SignalR Broadcasting**: Decoupled broadcasting pattern allowing services to push real-time updates without direct hub dependency.
+- **Clean Layers**: 3-tier architecture (Web, Service, Data) with repository and broadcast abstractions.
 
-## ?? Project Structure
+## 🛠️ Technology Stack
+
+- **.NET 9.0** - Core framework
+- **ASP.NET Core Razor Pages** - Frontend rendering
+- **SignalR** - Real-time communication (Server-to-client)
+- **Entity Framework Core** - ORM support for SQL Server and In-Memory
+- **Bootstrap 5** - Modern UI styling
+
+## 📂 Project Structure
 
 ```
 OnlineLearningPlatformAss2/
-??? OnlineLearningPlatformAss2.RazorWebApp/     # Main Razor Pages application
-?   ??? Pages/                                   # Razor Pages
-?   ?   ??? User/                               # User management pages
-?   ?   ??? Course/                             # Course-related pages
-?   ?   ??? Assessment/                         # Assessment pages
-?   ?   ??? Shared/                             # Shared layouts and partials
-?   ??? Models/                                 # Page models and view models
-?   ??? Hubs/                                   # SignalR hubs
-?   ??? wwwroot/                                # Static files (CSS, JS, images)
-?   ??? Program.cs                              # Application entry point
-??? OnlineLearningPlatformAss2.Service/         # Business logic layer
-?   ??? Services/                               # Service implementations
-?   ??? DTOs/                                   # Data transfer objects
-?   ??? Results/                                # Service result patterns
-??? OnlineLearningPlatformAss2.Data/            # Data access layer
-?   ??? Database/                               # EF Core DbContext and entities
-?   ??? Repositories/                           # Repository implementations
-??? OnlineLearningPlatformAss2.sln              # Solution file
+├── OnlineLearningPlatformAss2.RazorWebApp/     # Presentation Layer
+│   ├── Pages/                                   # Razor Pages (UI)
+│   ├── Hubs/                                    # SignalR Hub Contracts
+│   ├── Services/                                # SignalR Broadcasters
+│   └── wwwroot/                                 # Static Assets (SignalR.js, etc.)
+├── OnlineLearningPlatformAss2.Service/         # Business Logic Layer
+│   ├── Services/                                # Business Logic & Orchestration
+│   ├── DTOs/                                    # Data Transfer Objects
+│   └── Interfaces/                              # Service & Broadcaster Interfaces
+└── OnlineLearningPlatformAss2.Data/            # Data Access Layer
+    ├── Database/                                # EF Core Context
+    ├── Entities/                                # Domain Entities
+    └── Repositories/                            # Data Access Pattern
 ```
 
-## ??? Prerequisites
+## 🏗️ Technical Architecture
 
-- [.NET 9.0 SDK](https://dotnet.microsoft.com/download/dotnet/9.0) or later
-- A code editor (Visual Studio, VS Code, or Rider)
-- SQL Server (LocalDB or full SQL Server)
+### Real-time Broadcasting Pattern
+The application implements a decoupled SignalR pattern:
+1. **ICourseClient**: Defines the client-side contract.
+2. **ICourseUpdateBroadcaster**: Service-layer interface for pushing updates.
+3. **SignalRCourseUpdateBroadcaster**: RazorWebApp implementation that uses `IHubContext` to reach clients.
+4. **AdminService**: Consumes the broadcaster interface; it doesn't need to know about SignalR Hubs directly.
 
-## ?? Quick Start
+## 🔨 Quick Start
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd OnlineLearningPlatformAss2
-   ```
-
-2. **Restore dependencies**
+1. **Restore & Build**:
    ```bash
    dotnet restore
+   dotnet build
    ```
 
-3. **Update connection string**
-   Edit `OnlineLearningPlatformAss2.RazorWebApp/appsettings.json`:
-   ```json
-   {
-     "ConnectionStrings": {
-       "DefaultConnection": "Server=.;Database=OnlineLearningPlatformDb;Trusted_Connection=True;TrustServerCertificate=True"
-     }
-   }
-   ```
-
-4. **Create/Update database**
+2. **Database Update** (if not using In-Memory):
    ```bash
    dotnet ef database update --project OnlineLearningPlatformAss2.Data --startup-project OnlineLearningPlatformAss2.RazorWebApp
    ```
 
-5. **Run the application**
+3. **Run**:
    ```bash
    cd OnlineLearningPlatformAss2.RazorWebApp
    dotnet run
    ```
-
-## ??? Architecture
-
-The project follows a **3-tier layered architecture**:
-
-### Presentation Layer (RazorWebApp)
-- **Razor Pages**: Server-side rendered pages with code-behind models
-- **Page Models**: Handle HTTP requests and business logic coordination
-- **ViewModels**: Data structures for rendering views
-- **Static Assets**: CSS, JavaScript, and images
-
-### Business Logic Layer (Service)
-- **Services**: Business logic implementation
-- **DTOs**: Data transfer objects for API communication
-- **Validators**: Input validation using FluentValidation
-- **Service Results**: Standardized response patterns
-
-### Data Access Layer (Data)
-- **DbContext**: Entity Framework Core database context
-- **Entities**: Domain models representing database tables
-- **Repositories**: Data access abstraction layer
-- **Configurations**: EF Core entity configurations
-
-## ?? Differences from MVC Version
-
-| Aspect | MVC | Razor Pages |
-|--------|-----|-------------|
-| **Structure** | Controller + Action Methods | Page + PageModel |
-| **Routing** | Controller/Action based | Page-based routing |
-| **Organization** | Separate Controllers/Views | Co-located Pages |
-| **URL Structure** | `/Controller/Action` | `/PageName` |
-| **File Organization** | Controllers, Views, Models folders | Pages with code-behind |
