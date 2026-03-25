@@ -12,8 +12,8 @@ public interface IAdminRepository
     Task<int> GetEnrollmentCountAsync();
     Task<decimal> GetTotalRevenueAsync();
     Task<IEnumerable<Order>> GetRecentOrdersAsync(int count);
-    Task<List<(int Year, int Month, int Count)>> GetMonthlyEnrollmentsAsync(int months);
-    Task<List<(int Year, int Month, decimal Total)>> GetMonthlyRevenueAsync(int months);
+    Task<List<(string Label, int Count)>> GetEnrollmentChartDataAsync(DateTime? startDate, DateTime? endDate);
+    Task<List<(string Label, decimal Total)>> GetRevenueChartDataAsync(DateTime? startDate, DateTime? endDate);
     
     // Courses
     Task<IEnumerable<Course>> GetPendingCoursesAsync();
@@ -29,7 +29,6 @@ public interface IAdminRepository
     Task<IEnumerable<User>> GetInstructorsAsync();
 
     // Course CRUD
-    Task AddCourseAsync(Course course);
     Task DeleteCourseAsync(Guid courseId);
     
     // Users

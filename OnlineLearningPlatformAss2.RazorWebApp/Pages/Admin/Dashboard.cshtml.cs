@@ -21,14 +21,20 @@ public class DashboardModel : PageModel
 
     public AdminStatsDto Stats { get; set; } = new();
 
+    [BindProperty(SupportsGet = true)]
+    public DateTime? StartDate { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public DateTime? EndDate { get; set; }
+
     public async Task OnGetAsync()
     {
-        Stats = await _adminService.GetStatsAsync();
+        Stats = await _adminService.GetStatsAsync(StartDate, EndDate);
     }
 
-    public async Task<IActionResult> OnPostGenerateAiAnalysisAsync()
+    public async Task<IActionResult> OnPostGenerateAiAnalysisAsync([FromBody] DateFilterRequest request)
     {
-        Stats = await _adminService.GetStatsAsync();
+        Stats = await _adminService.GetStatsAsync(request?.StartDate, request?.EndDate);
 
         // Build context string for AI
         var sb = new StringBuilder();
@@ -50,4 +56,10 @@ public class DashboardModel : PageModel
         var analysis = await _chatbotService.AnalyzeRevenueAsync(sb.ToString());
         return new JsonResult(new { analysis });
     }
+}
+
+public class DateFilterRequest
+{
+    public DateTime? StartDate { get; set; }
+    public DateTime? EndDate { get; set; }
 }

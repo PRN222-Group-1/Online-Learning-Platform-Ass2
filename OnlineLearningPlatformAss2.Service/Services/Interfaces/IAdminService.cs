@@ -5,7 +5,7 @@ namespace OnlineLearningPlatformAss2.Service.Services.Interfaces;
 
 public interface IAdminService
 {
-    Task<AdminStatsDto> GetStatsAsync();
+    Task<AdminStatsDto> GetStatsAsync(DateTime? startDate = null, DateTime? endDate = null);
     Task<IEnumerable<CourseViewModel>> GetPendingCoursesAsync();
     Task<bool> ApproveCourseAsync(Guid courseId);
     Task<bool> RejectCourseAsync(Guid courseId, string reason);
@@ -17,6 +17,7 @@ public interface IAdminService
     Task<bool> ChangeUserRoleAsync(Guid userId, string roleName);
     Task<bool> DeleteUserAsync(Guid userId);
     Task<bool> AddInternalUserAsync(string username, string email, string password, string role);
+    Task<bool> ResetUserPasswordAsync(Guid userId, string newPassword);
     
     // Course CRUD
     Task<(IEnumerable<CategoryDto> Categories, IEnumerable<InstructorDto> Instructors)> GetFormDataAsync();

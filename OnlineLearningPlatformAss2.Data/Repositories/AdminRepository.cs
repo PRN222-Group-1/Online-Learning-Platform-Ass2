@@ -49,34 +49,70 @@ public class AdminRepository(OnlineLearningSystemDbContext context) : IAdminRepo
             .ToListAsync();
     }
 
-    public async Task<List<(int Year, int Month, int Count)>> GetMonthlyEnrollmentsAsync(int months)
+    public async Task<List<(string Label, int Count)>> GetEnrollmentChartDataAsync(DateTime? startDate, DateTime? endDate)
     {
-        var fromDate = DateTime.UtcNow.AddMonths(-months + 1);
-        fromDate = new DateTime(fromDate.Year, fromDate.Month, 1);
+        var query = context.Enrollments.AsQueryable();
+        if (startDate.HasValue) query = query.Where(e => e.EnrolledAt >= startDate.Value);
+        if (endDate.HasValue) query = query.Where(e => e.EnrolledAt <= endDate.Value);
 
-        var data = await context.Enrollments
-            .Where(e => e.EnrolledAt >= fromDate)
-            .GroupBy(e => new { e.EnrolledAt.Year, e.EnrolledAt.Month })
-            .Select(g => new { g.Key.Year, g.Key.Month, Count = g.Count() })
-            .OrderBy(x => x.Year).ThenBy(x => x.Month)
-            .ToListAsync();
-
-        return data.Select(x => (x.Year, x.Month, x.Count)).ToList();
+        var isDaily = startDate.HasValue && endDate.HasValue && (endDate.Value - startDate.Value).TotalDays <= 31;
+        
+        if (isDaily)
+        {
+            var data = await query
+                .GroupBy(e => e.EnrolledAt.Date)
+                .Select(g => new { Date = g.Key, Count = g.Count() })
+                .OrderBy(x => x.Date)
+                .ToListAsync();
+            return data.Select(x => (x.Date.ToString("dd/MM/yyyy"), x.Count)).ToList();
+        }
+        else
+        {
+            if (!startDate.HasValue)
+            {
+                var minDate = DateTime.UtcNow.AddMonths(-23);
+                query = query.Where(e => e.EnrolledAt >= new DateTime(minDate.Year, minDate.Month, 1));
+            }
+            var data = await query
+                .GroupBy(e => new { e.EnrolledAt.Year, e.EnrolledAt.Month })
+                .Select(g => new { g.Key.Year, g.Key.Month, Count = g.Count() })
+                .OrderBy(x => x.Year).ThenBy(x => x.Month)
+                .ToListAsync();
+            return data.Select(x => ($"{new DateTime(x.Year, x.Month, 1):MMM yyyy}", x.Count)).ToList();
+        }
     }
 
-    public async Task<List<(int Year, int Month, decimal Total)>> GetMonthlyRevenueAsync(int months)
+    public async Task<List<(string Label, decimal Total)>> GetRevenueChartDataAsync(DateTime? startDate, DateTime? endDate)
     {
-        var fromDate = DateTime.UtcNow.AddMonths(-months + 1);
-        fromDate = new DateTime(fromDate.Year, fromDate.Month, 1);
+        var query = context.Orders.Where(o => o.Status == "Completed");
+        if (startDate.HasValue) query = query.Where(o => o.CreatedAt >= startDate.Value);
+        if (endDate.HasValue) query = query.Where(o => o.CreatedAt <= endDate.Value);
 
-        var data = await context.Orders
-            .Where(o => o.Status == "Completed" && o.CreatedAt >= fromDate)
-            .GroupBy(o => new { o.CreatedAt.Year, o.CreatedAt.Month })
-            .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Sum(o => o.TotalAmount) })
-            .OrderBy(x => x.Year).ThenBy(x => x.Month)
-            .ToListAsync();
+        var isDaily = startDate.HasValue && endDate.HasValue && (endDate.Value - startDate.Value).TotalDays <= 31;
 
-        return data.Select(x => (x.Year, x.Month, x.Total)).ToList();
+        if (isDaily)
+        {
+            var data = await query
+                .GroupBy(o => o.CreatedAt.Date)
+                .Select(g => new { Date = g.Key, Total = g.Sum(o => o.TotalAmount) })
+                .OrderBy(x => x.Date)
+                .ToListAsync();
+            return data.Select(x => (x.Date.ToString("dd/MM/yyyy"), x.Total)).ToList();
+        }
+        else
+        {
+            if (!startDate.HasValue)
+            {
+                var minDate = DateTime.UtcNow.AddMonths(-23);
+                query = query.Where(o => o.CreatedAt >= new DateTime(minDate.Year, minDate.Month, 1));
+            }
+            var data = await query
+                .GroupBy(o => new { o.CreatedAt.Year, o.CreatedAt.Month })
+                .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Sum(o => o.TotalAmount) })
+                .OrderBy(x => x.Year).ThenBy(x => x.Month)
+                .ToListAsync();
+            return data.Select(x => ($"{new DateTime(x.Year, x.Month, 1):MMM yyyy}", x.Total)).ToList();
+        }
     }
 
     // Courses
@@ -152,11 +188,6 @@ public class AdminRepository(OnlineLearningSystemDbContext context) : IAdminRepo
     }
 
     // Course CRUD
-    public async Task AddCourseAsync(Course course)
-    {
-        await context.Courses.AddAsync(course);
-    }
-
     public async Task DeleteCourseAsync(Guid courseId)
     {
         var course = await context.Courses.FindAsync(courseId);

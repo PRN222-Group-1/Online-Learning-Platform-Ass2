@@ -15,8 +15,11 @@ public class AdminService(
     ICourseUpdateBroadcaster? broadcaster = null,
     IAdminUpdateBroadcaster? adminBroadcaster = null) : IAdminService
 {
-    public async Task<AdminStatsDto> GetStatsAsync()
+    public async Task<AdminStatsDto> GetStatsAsync(DateTime? startDate = null, DateTime? endDate = null)
     {
+        var minDate = DateTime.UtcNow.AddYears(-2);
+        if (startDate.HasValue && startDate.Value < minDate) startDate = minDate;
+
         var stats = new AdminStatsDto
         {
             TotalUsers = await adminRepository.GetUserCountAsync(),
@@ -38,25 +41,31 @@ public class AdminService(
             CreatedAt = o.CreatedAt
         }).ToList();
 
-        // Monthly chart data (last 12 months)
-        var monthlyEnrollments = await adminRepository.GetMonthlyEnrollmentsAsync(12);
-        var monthlyRevenue = await adminRepository.GetMonthlyRevenueAsync(12);
+        // Chart data (Dynamic: Daily if <= 31 days span, otherwise Monthly)
+        var enrollmentsData = await adminRepository.GetEnrollmentChartDataAsync(startDate, endDate);
+        var revenueData = await adminRepository.GetRevenueChartDataAsync(startDate, endDate);
 
-        var enrollmentDict = monthlyEnrollments.ToDictionary(x => $"{x.Year}-{x.Month:D2}", x => x.Count);
-        var revenueDict = monthlyRevenue.ToDictionary(x => $"{x.Year}-{x.Month:D2}", x => x.Total);
+        var enrollmentDict = enrollmentsData.ToDictionary(x => x.Label, x => x.Count);
+        var revenueDict = revenueData.ToDictionary(x => x.Label, x => x.Total);
 
         var chartData = new List<MonthlyChartDataDto>();
-        for (int i = 11; i >= 0; i--)
+        
+        // Combine all unique labels maintaining chronological order roughly 
+        // Note: The repositories already sorted them chronologically.
+        var labels = enrollmentsData.Select(x => x.Label)
+            .Union(revenueData.Select(x => x.Label))
+            .ToList(); // they are already mostly sorted from the DB queries
+
+        foreach (var label in labels)
         {
-            var date = DateTime.UtcNow.AddMonths(-i);
-            var key = $"{date.Year}-{date.Month:D2}";
             chartData.Add(new MonthlyChartDataDto
             {
-                Month = date.ToString("MMM yyyy"),
-                EnrollmentCount = enrollmentDict.GetValueOrDefault(key, 0),
-                Revenue = revenueDict.GetValueOrDefault(key, 0m)
+                Month = label,
+                EnrollmentCount = enrollmentDict.GetValueOrDefault(label, 0),
+                Revenue = revenueDict.GetValueOrDefault(label, 0m)
             });
         }
+        
         stats.MonthlyChartData = chartData;
 
         return stats;
@@ -284,6 +293,22 @@ public class AdminService(
         await userRepository.SaveChangesAsync();
         return true;
     }
+
+    public async Task<bool> ResetUserPasswordAsync(Guid userId, string newPassword)
+    {
+        var user = await userRepository.GetByIdAsync(userId);
+        if (user == null) return false;
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+        await userRepository.UpdateAsync(user);
+        await userRepository.SaveChangesAsync();
+
+        if (adminBroadcaster != null)
+        {
+            await adminBroadcaster.BroadcastUserPasswordResetAsync(userId);
+        }
+        return true;
+    }
     // Course CRUD
     public async Task<(IEnumerable<CategoryDto> Categories, IEnumerable<InstructorDto> Instructors)> GetFormDataAsync()
     {
@@ -378,13 +403,11 @@ public class AdminService(
             InstructorName = course.Instructor.Username,
             InstructorId = course.InstructorId,
             CategoryId = course.CategoryId,
-            Description = course.Description ?? "",
             Level = course.Level,
             Language = course.Language,
             ImageUrl = course.ImageUrl,
             IsFeatured = course.IsFeatured,
             Status = course.Status,
-            Language = course.Language,
             RejectionReason = course.RejectionReason,
             StudentCount = await courseRepository.GetEnrollmentCountAsync(course.CourseId)
         };

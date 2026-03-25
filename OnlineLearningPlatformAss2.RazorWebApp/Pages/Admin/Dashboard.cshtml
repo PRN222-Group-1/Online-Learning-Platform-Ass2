@@ -101,6 +101,26 @@
             </div>
         </div>
     </div>
+    
+    <!-- Date Range Filter -->
+    <div class="card admin-card shadow-sm mb-4 border-0">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end" id="dateFilterForm">
+                <div class="col-md-4">
+                    <label class="form-label text-muted small fw-bold">Chart Start Date (Max: 2 yrs ago)</label>
+                    <input type="date" name="startDate" id="startDate" class="form-control" value="@Model.StartDate?.ToString("yyyy-MM-dd")" min="@DateTime.UtcNow.AddYears(-2).ToString("yyyy-MM-dd")" max="@DateTime.UtcNow.ToString("yyyy-MM-dd")">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label text-muted small fw-bold">Chart End Date</label>
+                    <input type="date" name="endDate" id="endDate" class="form-control" value="@Model.EndDate?.ToString("yyyy-MM-dd")" max="@DateTime.UtcNow.ToString("yyyy-MM-dd")">
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary px-4 shadow-sm"><i class="bi bi-funnel me-2"></i>Apply to Charts</button>
+                    <a href="/Admin/Dashboard" class="btn btn-outline-secondary ms-2">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- Charts Row -->
     <div class="row g-4 mb-5">
@@ -108,11 +128,14 @@
             <div class="card admin-card shadow-sm h-100">
                 <div class="card-header bg-white py-4 border-0 d-flex justify-content-between align-items-center">
                     <h5 class="fw-bold mb-0"><i class="bi bi-graph-up text-primary me-2"></i>Student Enrollments</h5>
-                    <div class="btn-group btn-group-sm" id="enrollFilterGroup">
-                        <button class="btn btn-outline-primary" onclick="filterChart('enroll', 3)">3M</button>
-                        <button class="btn btn-outline-primary" onclick="filterChart('enroll', 6)">6M</button>
-                        <button class="btn btn-outline-primary active" onclick="filterChart('enroll', 12)">12M</button>
-                    </div>
+                    @if (!Model.StartDate.HasValue && !Model.EndDate.HasValue)
+                    {
+                        <div class="btn-group btn-group-sm" id="enrollFilterGroup">
+                            <button class="btn btn-outline-primary" onclick="filterChart('enroll', 6)">6M</button>
+                            <button class="btn btn-outline-primary active" onclick="filterChart('enroll', 12)">12M</button>
+                            <button class="btn btn-outline-primary" onclick="filterChart('enroll', 24)">24M</button>
+                        </div>
+                    }
                 </div>
                 <div class="card-body">
                     <canvas id="enrollmentChart" height="280"></canvas>
@@ -123,11 +146,14 @@
             <div class="card admin-card shadow-sm h-100">
                 <div class="card-header bg-white py-4 border-0 d-flex justify-content-between align-items-center">
                     <h5 class="fw-bold mb-0"><i class="bi bi-bar-chart-fill text-success me-2"></i>Revenue</h5>
-                    <div class="btn-group btn-group-sm" id="revenueFilterGroup">
-                        <button class="btn btn-outline-success" onclick="filterChart('revenue', 3)">3M</button>
-                        <button class="btn btn-outline-success" onclick="filterChart('revenue', 6)">6M</button>
-                        <button class="btn btn-outline-success active" onclick="filterChart('revenue', 12)">12M</button>
-                    </div>
+                    @if (!Model.StartDate.HasValue && !Model.EndDate.HasValue)
+                    {
+                        <div class="btn-group btn-group-sm" id="revenueFilterGroup">
+                            <button class="btn btn-outline-success" onclick="filterChart('revenue', 6)">6M</button>
+                            <button class="btn btn-outline-success active" onclick="filterChart('revenue', 12)">12M</button>
+                            <button class="btn btn-outline-success" onclick="filterChart('revenue', 24)">24M</button>
+                        </div>
+                    }
                 </div>
                 <div class="card-body">
                     <canvas id="revenueChart" height="280"></canvas>
@@ -269,10 +295,12 @@
             var allEnrollments = allChartData.map(d => d.enrollmentCount);
             var allRevenues = allChartData.map(d => d.revenue);
 
-            // Default: show last 12 months
-            var labels = allLabels;
-            var enrollments = allEnrollments;
-            var revenues = allRevenues;
+            var isFiltered = @((Model.StartDate.HasValue || Model.EndDate.HasValue).ToString().ToLower());
+
+            // If deeply filtered, just show everything returned. Else, default to 12.
+            var labels = isFiltered ? allLabels : allLabels.slice(-12);
+            var enrollments = isFiltered ? allEnrollments : allEnrollments.slice(-12);
+            var revenues = isFiltered ? allRevenues : allRevenues.slice(-12);
 
             var enrollChart, revenueChart;
 
@@ -429,12 +457,16 @@
 
             try {
                 var token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                var startDate = document.getElementById('startDate').value;
+                var endDate = document.getElementById('endDate').value;
+                
                 var resp = await fetch('/Admin/Dashboard?handler=GenerateAiAnalysis', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'RequestVerificationToken': token
-                    }
+                    },
+                    body: JSON.stringify({ startDate: startDate || null, endDate: endDate || null })
                 });
                 var data = await resp.json();
                 result.innerHTML = simpleMarkdownToHtml(data.analysis);
