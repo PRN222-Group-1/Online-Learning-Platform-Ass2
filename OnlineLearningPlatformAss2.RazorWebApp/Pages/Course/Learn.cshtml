@@ -692,41 +692,74 @@
          */
         function convertTimestampsToLinks(text) {
             if (!text) return '';
-            // Regex to find timestamps: [01:23], (01:23), [1:23:45] or 01:23
-            const timestampRegex = /([\[\(])?(?:(\d{1,2}):)?(\d{1,2}):(\d{2})([\]\)])?/g;
+            // Improved regex: matches [00:30], (00:30), [1:23:45], 01:23 with optional brackets
+            // Specifically avoids matching isolated number pairs that aren't timestamps
+            const timestampRegex = /(?:[\[\(])?(?:(\d{1,2}):)?(\d{1,2}):(\d{2})(?:[\]\)])?/g;
             
-            return text.replace(timestampRegex, (match, openBracket, hours, minutes, seconds, closeBracket) => {
+            return text.replace(timestampRegex, (match, hours, minutes, seconds) => {
                 let totalSeconds = 0;
                 if (hours) {
                     totalSeconds += parseInt(hours) * 3600;
                 }
                 totalSeconds += parseInt(minutes) * 60 + parseInt(seconds);
                 
-                return `<a href="javascript:void(0)" onclick="seekVideo(${totalSeconds}); return false;" class="text-primary fw-bold text-decoration-none timestamp-link" title="Seek to ${match.replace(/[\[\]\(\)]/g, '')}">${match}</a>`;
+                // Title and styling improvements
+                const timeStr = [hours, minutes, seconds].filter(x => x !== undefined).join(':');
+                return `<a href="javascript:void(0)" onclick="seekVideo(${totalSeconds}); return false;" class="text-primary fw-bold text-decoration-none timestamp-link" title="Seek to ${timeStr}">${match}</a>`;
             });
         }
 
         function seekVideo(seconds) {
-            console.log("Seeking video to:", seconds, "seconds");
-            const video = document.getElementById('videoPlayer');
+            console.log("=== SEEKING VIDEO TO:", seconds, "SECONDS ===");
             
-            if (video && video.readyState >= 1) { // 1 = HAVE_METADATA
-                video.currentTime = seconds;
-                video.play().catch(e => console.warn("Auto-play failed after seek:", e));
-                video.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            } else {
-                // Try YouTube iframe or wait/retry
-                const iframe = document.querySelector('#videoContainer iframe');
-                if (iframe) {
-                    console.log("Found YouTube iframe, sending seekTo command");
-                    // Try postMessage for YouTube. Requires enablejsapi=1 in URL.
-                    iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'seekTo', args: [seconds, true] }), '*');
-                    // Also fire playVideo
-                    iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*');
-                    iframe.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                } else {
-                    console.error("No active video player found to seek.");
+            try {
+                // 1. Target local HTML5 video
+                const video = document.getElementById('videoPlayer');
+                if (video && video.readyState >= 1) { // 1 = HAVE_METADATA
+                    console.log("Local video found, seeking...");
+                    video.currentTime = seconds;
+                    video.play().catch(e => console.warn("Auto-play failed after seek:", e));
+                    video.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return;
                 }
+
+                // 2. Target YouTube iframe (by ID first, then selector)
+                const youtubeIframe = document.getElementById('youtubePlayer') || 
+                                     document.querySelector('#videoContainer iframe') || 
+                                     document.querySelector('iframe[src*="youtube.com"]');
+                
+                if (youtubeIframe) {
+                    console.log("YouTube player found, sending postMessage commands...");
+                    
+                    // Simple check if url contains enablejsapi
+                    if (!youtubeIframe.src.includes('enablejsapi=1')) {
+                        console.warn("YouTube iframe missing enablejsapi=1, seeking might not work!");
+                    }
+
+                    // Standard YouTube Iframe API postMessage command
+                    const seekCmd = JSON.stringify({
+                        event: 'command',
+                        func: 'seekTo',
+                        args: [seconds, true]
+                    });
+                    
+                    const playCmd = JSON.stringify({
+                        event: 'command',
+                        func: 'playVideo',
+                        args: []
+                    });
+                    
+                    youtubeIframe.contentWindow.postMessage(seekCmd, '*');
+                    youtubeIframe.contentWindow.postMessage(playCmd, '*');
+                    
+                    youtubeIframe.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    console.log("Seek/Play commands sent to YouTube iframe.");
+                } else {
+                    console.error("CRITICAL: No active video player found to seek.");
+                    alert("Không tìm thấy trình phát video để nhảy đến thời điểm này.");
+                }
+            } catch (err) {
+                console.error("Error during seekVideo:", err);
             }
         }
 

@@ -88,12 +88,12 @@
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <div class="bg-warning bg-opacity-10 p-3 rounded-4">
-                            <i class="bi bi-book text-warning fs-4"></i>
+                            <i class="bi bi-person-plus text-warning fs-4"></i>
                         </div>
-                        <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-3">Active</span>
+                        <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-3">Enrollments</span>
                     </div>
-                    <h2 class="admin-stat-value mb-1">@Model.Stats.TotalCourses</h2>
-                    <p class="text-muted small mb-0">Across all categories</p>
+                    <h2 class="admin-stat-value mb-1">@Model.Stats.TotalEnrollments.ToString("N0")</h2>
+                    <p class="text-muted small mb-0">Across @Model.Stats.TotalCourses active courses</p>
                 </div>
             </div>
         </div>
@@ -331,6 +331,11 @@
 
             var enrollChart, revenueChart;
 
+            if (allChartData.length === 0) {
+                console.warn("No chart data available");
+                // Optional: show a message in the UI
+            }
+
             // Line Chart - Enrollments
             var enrollCtx = document.getElementById('enrollmentChart').getContext('2d');
             var enrollGradient = enrollCtx.createLinearGradient(0, 0, 0, 320);
@@ -442,10 +447,15 @@
                 result.innerHTML = '';
 
                 try {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const startDate = urlParams.get('StartDate');
+                    const endDate = urlParams.get('EndDate');
+
                     const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
                     const resp = await fetch('/Admin/Dashboard?handler=GenerateAiAnalysis', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token }
+                        headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                        body: JSON.stringify({ startDate, endDate })
                     });
                     const data = await resp.json();
                     result.innerHTML = `<h6><i class="bi bi-graph-up me-2"></i>Revenue Analysis</h6>` + simpleMarkdownToHtml(data.analysis);

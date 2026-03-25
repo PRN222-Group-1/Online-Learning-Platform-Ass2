@@ -24,5 +24,4 @@ public interface IAdminService
     Task<CourseViewModel?> CreateCourseAsync(AdminCreateCourseDto dto);
     Task<CourseViewModel?> UpdateCourseAsync(AdminUpdateCourseDto dto);
     Task<bool> DeleteCourseAsync(Guid courseId);
-    Task<bool> ResetUserPasswordAsync(Guid userId, string newPassword);
 }

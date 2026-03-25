@@ -50,11 +50,23 @@ public class AdminService(
 
         var chartData = new List<MonthlyChartDataDto>();
         
-        // Combine all unique labels maintaining chronological order roughly 
-        // Note: The repositories already sorted them chronologically.
-        var labels = enrollmentsData.Select(x => x.Label)
-            .Union(revenueData.Select(x => x.Label))
-            .ToList(); // they are already mostly sorted from the DB queries
+        // Generate a continuous list of labels based on date range
+        var labels = new List<string>();
+        var isDailyResult = (endDate ?? DateTime.UtcNow) - (startDate ?? DateTime.UtcNow.AddMonths(-11));
+        bool isDaily = isDailyResult.TotalDays <= 31 && startDate.HasValue && endDate.HasValue;
+
+        if (isDaily)
+        {
+            for (var d = startDate!.Value.Date; d <= endDate!.Value.Date; d = d.AddDays(1))
+                labels.Add(d.ToString("dd/MM/yyyy"));
+        }
+        else
+        {
+            var s = startDate ?? DateTime.UtcNow.AddMonths(-11);
+            var e = endDate ?? DateTime.UtcNow;
+            for (var d = new DateTime(s.Year, s.Month, 1); d <= new DateTime(e.Year, e.Month, 1); d = d.AddMonths(1))
+                labels.Add($"{d:MMM yyyy}");
+        }
 
         foreach (var label in labels)
         {
@@ -574,22 +586,6 @@ public class AdminService(
             if (courseVm != null) await broadcaster.BroadcastCourseUpdatedAsync(courseVm);
         }
 
-        return true;
-    }
-
-    public async Task<bool> ResetUserPasswordAsync(Guid userId, string newPassword)
-    {
-        var user = await userRepository.GetByIdAsync(userId);
-        if (user == null) return false;
-
-        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
-        await userRepository.UpdateAsync(user);
-        await userRepository.SaveChangesAsync();
-
-        if (adminBroadcaster != null)
-        {
-            await adminBroadcaster.BroadcastUserStatusToggledAsync(userId, user.IsActive); // Or a specific event
-        }
         return true;
     }
 }

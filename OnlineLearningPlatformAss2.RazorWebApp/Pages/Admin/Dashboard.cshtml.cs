@@ -35,7 +35,7 @@ public class DashboardModel : PageModel
 
     public async Task<IActionResult> OnPostGenerateAiAnalysisAsync([FromBody] DateFilterRequest request)
     {
-        Stats = await _adminService.GetStatsAsync();
+        Stats = await _adminService.GetStatsAsync(request?.StartDate, request?.EndDate);
         var context = BuildAdminContext(Stats);
 
         var analysis = await _chatbotService.AnalyzeRevenueAsync(context);
