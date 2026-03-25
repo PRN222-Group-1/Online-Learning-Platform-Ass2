@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
+using System.Text;
 using OnlineLearningPlatformAss2.Service.Services.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -63,21 +64,45 @@ public class TranscriptService(HttpClient httpClient, IConfiguration configurati
                 return default;
             }
 
-            // 1. Check "data" object (common)
+            // 1. Get fundamental objects
             JsonElement dataEl = GetPropertyIgnoreContent(root, "data");
-            if (dataEl.ValueKind == JsonValueKind.Object)
+
+            // 2. Prefer building from segments for timestamps
+            var segmentsEl = GetPropertyIgnoreContent(dataEl.ValueKind == JsonValueKind.Object ? dataEl : root, "segments");
+            if (segmentsEl.ValueKind == JsonValueKind.Array)
             {
-                var textEl = GetPropertyIgnoreContent(dataEl, "text");
-                if (textEl.ValueKind == JsonValueKind.String) transcript = textEl.GetString();
-                
-                if (string.IsNullOrEmpty(transcript))
+                var sb = new StringBuilder();
+                foreach (var segment in segmentsEl.EnumerateArray())
                 {
-                    var transEl = GetPropertyIgnoreContent(dataEl, "transcript");
-                    if (transEl.ValueKind == JsonValueKind.String) transcript = transEl.GetString();
+                    var startEl = GetPropertyIgnoreContent(segment, "start");
+                    var textStr = GetPropertyIgnoreContent(segment, "text").GetString();
+
+                    if (startEl.ValueKind == JsonValueKind.Number && !string.IsNullOrEmpty(textStr))
+                    {
+                        double startSecs = startEl.GetDouble();
+                        TimeSpan t = TimeSpan.FromSeconds(startSecs);
+                        sb.AppendLine($"[{(int)t.TotalMinutes:D2}:{t.Seconds:D2}] {textStr.Trim()}");
+                    }
+                }
+                transcript = sb.ToString();
+            }
+
+            // 2. Fallback to standard locations if segments not found
+            if (string.IsNullOrEmpty(transcript))
+            {
+                if (dataEl.ValueKind == JsonValueKind.Object)
+                {
+                    var textEl = GetPropertyIgnoreContent(dataEl, "text");
+                    if (textEl.ValueKind == JsonValueKind.String) transcript = textEl.GetString();
+
+                    if (string.IsNullOrEmpty(transcript))
+                    {
+                        var transEl = GetPropertyIgnoreContent(dataEl, "transcript");
+                        if (transEl.ValueKind == JsonValueKind.String) transcript = transEl.GetString();
+                    }
                 }
             }
-            
-            // 2. Check "transcript" object (as reported in raw output)
+
             if (string.IsNullOrEmpty(transcript))
             {
                 JsonElement transObj = GetPropertyIgnoreContent(root, "transcript");
@@ -85,12 +110,6 @@ public class TranscriptService(HttpClient httpClient, IConfiguration configurati
                 {
                     var fullTextEl = GetPropertyIgnoreContent(transObj, "full_text");
                     if (fullTextEl.ValueKind == JsonValueKind.String) transcript = fullTextEl.GetString();
-
-                    if (string.IsNullOrEmpty(transcript))
-                    {
-                        var textEl = GetPropertyIgnoreContent(transObj, "text");
-                        if (textEl.ValueKind == JsonValueKind.String) transcript = textEl.GetString();
-                    }
                 }
                 else if (transObj.ValueKind == JsonValueKind.String)
                 {
@@ -98,7 +117,6 @@ public class TranscriptService(HttpClient httpClient, IConfiguration configurati
                 }
             }
 
-            // 3. Check root level
             if (string.IsNullOrEmpty(transcript))
             {
                 var textEl = GetPropertyIgnoreContent(root, "text");

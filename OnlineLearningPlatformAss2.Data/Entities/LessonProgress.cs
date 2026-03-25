@@ -17,7 +17,7 @@ public partial class LessonProgress
 
     public string? AiSummary { get; set; }
 
-    public int AiSummaryStatus { get; set; }
+    public string? AiSummaryStatus { get; set; }
 
     public string? Transcript { get; set; }
 

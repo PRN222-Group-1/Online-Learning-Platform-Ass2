@@ -409,7 +409,9 @@ public partial class OnlineLearningSystemDbContext : DbContext
                 .ValueGeneratedNever()
                 .HasColumnName("progress_id");
             entity.Property(e => e.AiSummary).HasColumnName("ai_summary");
-            entity.Property(e => e.AiSummaryStatus).HasColumnName("ai_summary_status");
+            entity.Property(e => e.AiSummaryStatus)
+                .HasMaxLength(50)
+                .HasColumnName("ai_summary_status");
             entity.Property(e => e.EnrollmentId).HasColumnName("enrollment_id");
             entity.Property(e => e.IsCompleted).HasColumnName("is_completed");
             entity.Property(e => e.LastAccessedAt).HasColumnName("last_accessed_at");

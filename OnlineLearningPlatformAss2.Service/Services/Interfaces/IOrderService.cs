@@ -33,4 +33,9 @@ public interface IOrderService
     /// Get order statistics for dashboard
     /// </summary>
     Task<OrderStatsViewModel> GetOrderStatsAsync(Guid userId);
+
+    /// <summary>
+    /// Cancel a pending order
+    /// </summary>
+    Task<bool> CancelOrderAsync(Guid orderId);
 }

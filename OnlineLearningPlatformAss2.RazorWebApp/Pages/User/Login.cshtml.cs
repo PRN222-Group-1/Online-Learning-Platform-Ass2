@@ -21,6 +21,12 @@ public class LoginModel : PageModel
     [BindProperty]
     public UserLoginDto LoginDto { get; set; } = new();
 
+    [TempData]
+    public string? SuccessMessage { get; set; }
+
+    [TempData]
+    public string? ErrorMessage { get; set; }
+
     public void OnGet()
     {
     }
@@ -54,11 +60,33 @@ public class LoginModel : PageModel
                 new ClaimsPrincipal(claimsIdentity),
                 authProperties);
 
-            TempData["SuccessMessage"] = "Login successful!";
+            // Store user info in session for easy access
+            HttpContext.Session.SetString("UserId", result.Data.Id.ToString());
+            HttpContext.Session.SetString("UserEmail", result.Data.Email);
+            HttpContext.Session.SetString("UserName", result.Data.Username);
+            HttpContext.Session.SetString("UserRole", result.Data.Role ?? "User");
+            if (!string.IsNullOrEmpty(result.Data.AvatarUrl))
+            {
+                HttpContext.Session.SetString("AvatarUrl", result.Data.AvatarUrl);
+            }
+
+            SuccessMessage = "Login successful!";
+            
+            // Role-based redirect
+            if (result.Data.Role?.Equals("Admin", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                return RedirectToPage("/Admin/Dashboard");
+            }
+            if (result.Data.Role?.Equals("Instructor", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                return RedirectToPage("/Instructor/Dashboard");
+            }
+
             return RedirectToPage("/Index");
         }
 
-        ModelState.AddModelError(string.Empty, result.Message ?? "Login failed");
+        ErrorMessage = result.Message ?? "Login failed";
+        ModelState.AddModelError(string.Empty, ErrorMessage);
         return Page();
     }
 }

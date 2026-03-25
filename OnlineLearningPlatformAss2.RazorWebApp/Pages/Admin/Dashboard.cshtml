@@ -13,182 +13,179 @@
 </form>
 
 <div class="container-fluid py-4 admin-dashboard">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-5">
         <div>
-            <h2 class="fw-bold mb-0">System Overview</h2>
-            <p class="text-muted">Monitor your platform's health and growth.</p>
+            <h2 class="fw-bold mb-1 text-dark">System Overview</h2>
+            <p class="text-muted mb-0">Real-time performance and revenue tracking.</p>
         </div>
-        <div class="btn-group">
-            <a asp-page="/Admin/CourseModeration" class="btn btn-outline-primary shadow-sm">
-                <i class="bi bi-shield-check me-2"></i>Moderation
+        <div class="d-flex gap-2">
+            <a asp-page="/Admin/CourseModeration" class="btn btn-white border shadow-sm rounded-3 px-3">
+                <i class="bi bi-shield-check text-warning me-2"></i>Moderation
                 @if (Model.Stats.PendingCourses > 0)
                 {
-                    <span class="badge bg-danger ms-2">@Model.Stats.PendingCourses</span>
+                    <span class="badge bg-danger ms-1">@Model.Stats.PendingCourses</span>
                 }
             </a>
-            <a asp-page="/Admin/CourseManagement" class="btn btn-outline-info shadow-sm">
-                <i class="bi bi-collection-play me-2"></i>Courses
-            </a>
-            <a asp-page="/Admin/UserManagement" class="btn btn-outline-secondary shadow-sm">
-                <i class="bi bi-people me-2"></i>User Management
-            </a>
-            <a asp-page="/Admin/LiveChat" class="btn btn-outline-success shadow-sm">
-                <i class="bi bi-headset me-2"></i>Live Chat
-            </a>
+            <div class="dropdown">
+                <button class="btn btn-white border shadow-sm rounded-3 dropdown-toggle px-3" data-bs-toggle="dropdown">
+                    <i class="bi bi-grid-fill text-primary me-2"></i>Quick Access
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-2 rounded-3">
+                    <li><a class="dropdown-item rounded-2" asp-page="/Admin/CourseManagement"><i class="bi bi-collection-play me-2"></i>Courses</a></li>
+                    <li><a class="dropdown-item rounded-2" asp-page="/Admin/UserManagement"><i class="bi bi-people me-2"></i>Users</a></li>
+                    <li><a class="dropdown-item rounded-2" asp-page="/Admin/LiveChat"><i class="bi bi-headset me-2"></i>Live Chat</a></li>
+                </ul>
+            </div>
         </div>
     </div>
 
     <!-- Stats Grid -->
     <div class="row g-4 mb-5">
         <div class="col-md-3">
-            <div class="card admin-card p-4 h-100 shadow-sm border-0 bg-primary text-white">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="bg-white bg-opacity-20 p-3 rounded-3 me-3">
-                        <i class="bi bi-wallet2 fs-3 text-white"></i>
+            <div class="card admin-card border-0 shadow-sm overflow-hidden h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="bg-primary bg-opacity-10 p-3 rounded-4">
+                            <i class="bi bi-cash-stack text-primary fs-4"></i>
+                        </div>
+                        <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3">Net Profit</span>
                     </div>
-                    <span class="card-title-admin text-white opacity-75">Net Profit (30%)</span>
+                    <h2 class="admin-stat-value mb-1">@Model.Stats.TotalNetProfit.ToString("N0") ₫</h2>
+                    <p class="text-muted small mb-0">30% platform commission</p>
                 </div>
-                <h2 class="admin-stat-value mb-0 text-white">@Model.Stats.TotalNetProfit.ToString("N0") ₫</h2>
-                <p class="small mb-0 mt-2 opacity-75">Platform commission</p>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card admin-card p-4 h-100 shadow-sm border-start border-primary border-4">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="bg-primary bg-opacity-10 p-3 rounded-3 me-3">
-                        <i class="bi bi-currency-dollar text-primary fs-3"></i>
+            <div class="card admin-card border-0 shadow-sm overflow-hidden h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="bg-success bg-opacity-10 p-3 rounded-4">
+                            <i class="bi bi-currency-dollar text-success fs-4"></i>
+                        </div>
+                        <span class="text-success small fw-bold"><i class="bi bi-arrow-up-right"></i> +12%</span>
                     </div>
-                    <span class="card-title-admin">Gross Revenue</span>
+                    <h2 class="admin-stat-value mb-1">@Model.Stats.TotalRevenue.ToString("N0") ₫</h2>
+                    <p class="text-muted small mb-0">Total Gross Revenue</p>
                 </div>
-                <h2 class="admin-stat-value mb-0">@Model.Stats.TotalRevenue.ToString("N0") ₫</h2>
-                <p class="text-success fw-bold small mb-0 mt-2"><i class="bi bi-arrow-up-right me-1"></i>+12.5%</p>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card admin-card p-4 h-100 shadow-sm">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="bg-success bg-opacity-10 p-3 rounded-3 me-3">
-                        <i class="bi bi-people text-success fs-3"></i>
+            <div class="card admin-card border-0 shadow-sm overflow-hidden h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="bg-info bg-opacity-10 p-3 rounded-4">
+                            <i class="bi bi-people text-info fs-4"></i>
+                        </div>
+                        <span class="text-info small fw-bold">Students</span>
                     </div>
-                    <span class="card-title-admin">Total Students</span>
+                    <h2 class="admin-stat-value mb-1">@Model.Stats.TotalUsers</h2>
+                    <p class="text-muted small mb-0">@Model.Stats.TotalInstructors active instructors</p>
                 </div>
-                <h2 class="admin-stat-value mb-0">@Model.Stats.TotalUsers</h2>
-                <p class="text-muted small mb-0 mt-2">@Model.Stats.TotalInstructors Instructors</p>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card admin-card p-4 h-100 shadow-sm">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="bg-info bg-opacity-10 p-3 rounded-3 me-3">
-                        <i class="bi bi-book text-info fs-3"></i>
+            <div class="card admin-card border-0 shadow-sm overflow-hidden h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="bg-warning bg-opacity-10 p-3 rounded-4">
+                            <i class="bi bi-person-plus text-warning fs-4"></i>
+                        </div>
+                        <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-3">Enrollments</span>
                     </div>
-                    <span class="card-title-admin">Active Courses</span>
+                    <h2 class="admin-stat-value mb-1">@Model.Stats.TotalEnrollments.ToString("N0")</h2>
+                    <p class="text-muted small mb-0">Across @Model.Stats.TotalCourses active courses</p>
                 </div>
-                <h2 class="admin-stat-value mb-0">@Model.Stats.TotalCourses</h2>
-                <p class="text-muted small mb-0 mt-2">@Model.Stats.TotalEnrollments Enrollments</p>
             </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card admin-card p-4 h-100 shadow-sm">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="bg-warning bg-opacity-10 p-3 rounded-3 me-3">
-                        <i class="bi bi-hourglass-split text-warning fs-3"></i>
-                    </div>
-                    <span class="card-title-admin">Pending Reviews</span>
-                </div>
-                <h2 class="admin-stat-value mb-0 text-warning">@Model.Stats.PendingCourses</h2>
-                <p class="text-muted small mb-0 mt-2">Needs moderation</p>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Date Range Filter -->
-    <div class="card admin-card shadow-sm mb-4 border-0">
-        <div class="card-body">
-            <form method="get" class="row g-3 align-items-end" id="dateFilterForm">
-                <div class="col-md-4">
-                    <label class="form-label text-muted small fw-bold">Chart Start Date (Max: 2 yrs ago)</label>
-                    <input type="date" name="startDate" id="startDate" class="form-control" value="@Model.StartDate?.ToString("yyyy-MM-dd")" min="@DateTime.UtcNow.AddYears(-2).ToString("yyyy-MM-dd")" max="@DateTime.UtcNow.ToString("yyyy-MM-dd")">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label text-muted small fw-bold">Chart End Date</label>
-                    <input type="date" name="endDate" id="endDate" class="form-control" value="@Model.EndDate?.ToString("yyyy-MM-dd")" max="@DateTime.UtcNow.ToString("yyyy-MM-dd")">
-                </div>
-                <div class="col-md-4">
-                    <button type="submit" class="btn btn-primary px-4 shadow-sm"><i class="bi bi-funnel me-2"></i>Apply to Charts</button>
-                    <a href="/Admin/Dashboard" class="btn btn-outline-secondary ms-2">Reset</a>
-                </div>
-            </form>
         </div>
     </div>
 
     <!-- Charts Row -->
     <div class="row g-4 mb-5">
-        <div class="col-lg-6">
-            <div class="card admin-card shadow-sm h-100">
+        <div class="col-lg-7">
+            <div class="card admin-card shadow-sm h-100 border-0">
                 <div class="card-header bg-white py-4 border-0 d-flex justify-content-between align-items-center">
-                    <h5 class="fw-bold mb-0"><i class="bi bi-graph-up text-primary me-2"></i>Student Enrollments</h5>
-                    @if (!Model.StartDate.HasValue && !Model.EndDate.HasValue)
-                    {
-                        <div class="btn-group btn-group-sm" id="enrollFilterGroup">
-                            <button class="btn btn-outline-primary" onclick="filterChart('enroll', 6)">6M</button>
-                            <button class="btn btn-outline-primary active" onclick="filterChart('enroll', 12)">12M</button>
-                            <button class="btn btn-outline-primary" onclick="filterChart('enroll', 24)">24M</button>
-                        </div>
-                    }
+                    <h6 class="fw-bold mb-0 text-dark">Enrollment Trends</h6>
+                    <div class="btn-group btn-group-sm rounded-pill overflow-hidden border p-1 bg-light">
+                        <button class="btn btn-white border-0 rounded-pill px-3" onclick="filterChart('enroll', 3)">3M</button>
+                        <button class="btn btn-white border-0 rounded-pill px-3" onclick="filterChart('enroll', 6)">6M</button>
+                        <button class="btn btn-primary border-0 rounded-pill px-3 active" onclick="filterChart('enroll', 12)">12M</button>
+                    </div>
                 </div>
                 <div class="card-body">
-                    <canvas id="enrollmentChart" height="280"></canvas>
+                    <canvas id="enrollmentChart" height="320"></canvas>
                 </div>
             </div>
         </div>
-        <div class="col-lg-6">
-            <div class="card admin-card shadow-sm h-100">
+        <div class="col-lg-5">
+            <div class="card admin-card shadow-sm h-100 border-0">
                 <div class="card-header bg-white py-4 border-0 d-flex justify-content-between align-items-center">
-                    <h5 class="fw-bold mb-0"><i class="bi bi-bar-chart-fill text-success me-2"></i>Revenue</h5>
-                    @if (!Model.StartDate.HasValue && !Model.EndDate.HasValue)
-                    {
-                        <div class="btn-group btn-group-sm" id="revenueFilterGroup">
-                            <button class="btn btn-outline-success" onclick="filterChart('revenue', 6)">6M</button>
-                            <button class="btn btn-outline-success active" onclick="filterChart('revenue', 12)">12M</button>
-                            <button class="btn btn-outline-success" onclick="filterChart('revenue', 24)">24M</button>
+                    <h6 class="fw-bold mb-0 text-dark">Revenue Insights</h6>
+                    <div class="d-flex gap-2 align-items-center">
+                        <button onclick="toggleAiPanel()" class="btn btn-purple-subtle btn-sm rounded-circle d-flex align-items-center justify-content-center p-2 ai-insight-badge" title="AI Insight" style="width: 32px; height: 32px; background: rgba(124, 58, 237, 0.1); color: #7c3aed; border: none;">
+                            <i class="bi bi-stars"></i>
+                        </button>
+                        <div class="btn-group btn-group-sm rounded-pill overflow-hidden border p-1 bg-light">
+                            <button class="btn btn-white border-0 rounded-pill px-2" onclick="filterChart('revenue', 6)">6M</button>
+                            <button class="btn btn-success border-0 rounded-pill px-2 active" onclick="filterChart('revenue', 12)">1Y</button>
                         </div>
-                    }
+                    </div>
                 </div>
                 <div class="card-body">
-                    <canvas id="revenueChart" height="280"></canvas>
+                    <canvas id="revenueChart" height="320"></canvas>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- AI Revenue Analysis -->
-    <div class="row g-4 mb-5">
-        <div class="col-12">
-            <div class="card admin-card shadow-sm">
-                <div class="card-header bg-white py-4 border-0 d-flex justify-content-between align-items-center">
-                    <h5 class="fw-bold mb-0"><i class="bi bi-robot text-purple me-2" style="color: #7c3aed;"></i>AI Revenue Analysis</h5>
-                    <button id="btnAiAnalysis" class="btn btn-outline-primary btn-sm rounded-pill px-4" onclick="generateAiAnalysis()">
-                        <i class="bi bi-stars me-1"></i>Generate Analysis
+    <!-- Floating AI Panel -->
+    <div id="aiFloatingPanel" class="ai-floating-panel">
+        <button class="ai-toggle-btn" onclick="toggleAiPanel()">
+            <i class="bi bi-robot fs-4"></i>
+        </button>
+        <div class="ai-panel-header">
+            <h6 class="fw-bold mb-0"><i class="bi bi-stars text-purple me-2"></i>AI Admin Assistant</h6>
+            <button class="btn-close btn-sm" onclick="toggleAiPanel()"></button>
+        </div>
+        <div class="ai-panel-body" id="aiAnalysisBody">
+            <div id="aiEmpty" class="text-center py-5">
+                <div class="bg-light p-4 rounded-circle d-inline-block mb-3">
+                    <i class="bi bi-chat-dots text-muted fs-1"></i>
+                </div>
+                <h5>Admin Intelligence</h5>
+                <p class="text-muted small px-4">Ask me anything about your platform's revenue, students, or trends.</p>
+                <div class="d-grid gap-2 px-4">
+                    <button class="btn btn-primary rounded-pill shadow-sm" onclick="generateAiAnalysis()">
+                        <i class="bi bi-graph-up me-1"></i>Analyze Revenue
                     </button>
                 </div>
-                <div class="card-body" id="aiAnalysisBody" style="display: none;">
-                    <div id="aiLoading" class="text-center py-5" style="display: none;">
-                        <div class="spinner-border text-primary" role="status"></div>
-                        <p class="text-muted mt-3">AI is analyzing your data...</p>
-                    </div>
-                    <div id="aiResult" class="ai-analysis-content"></div>
-                </div>
+            </div>
+            <div id="aiLoading" class="text-center py-4" style="display: none;">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="text-muted mt-2 small">AI is processing...</p>
+            </div>
+            <div id="aiResult" class="ai-analysis-content"></div>
+        </div>
+        <div class="ai-panel-footer">
+            <div class="input-group input-group-sm">
+                <input type="text" id="aiAdminInput" class="form-control rounded-start-pill border-end-0 ps-3" placeholder="Ask a question..." onkeypress="if(event.key === 'Enter') askAiQuestion()">
+                <button class="btn btn-primary rounded-end-pill px-3" type="button" onclick="askAiQuestion()" id="btnSendAi">
+                    <i class="bi bi-send-fill"></i>
+                </button>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-2">
+                <span class="x-small text-muted">Powered by Groq AI</span>
+                <button onclick="clearAiChat()" class="btn btn-link btn-sm x-small text-decoration-none">Clear</button>
             </div>
         </div>
     </div>
 
+    <!-- Recent Transactions -->
     <div class="row g-4">
-        <!-- Recent Orders -->
-        <div class="col-lg-8">
-            <div class="card admin-card shadow-sm h-100">
-                <div class="card-header bg-white py-4 border-0">
-                    <h5 class="fw-bold mb-0">Recent Transactions</h5>
+        <div class="col-lg-12">
+            <div class="card admin-card shadow-sm border-0">
+                <div class="card-header bg-white py-4 border-0 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0">Recent Transactions</h6>
+                    <button class="btn btn-sm btn-white border rounded-pill px-3">View All</button>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -208,17 +205,22 @@
                                     <tr>
                                         <td class="ps-4">
                                             <div class="d-flex align-items-center">
-                                                <div class="avatar-sm bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
-                                                    <span class="small fw-bold text-secondary">@order.Username[0].ToString().ToUpper()</span>
+                                                <div class="avatar-sm rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 38px; height: 38px; background: #eef2ff; color: #4361ee;">
+                                                    <span class="small fw-bold">@order.Username[0].ToString().ToUpper()</span>
                                                 </div>
-                                                <span class="fw-bold">@order.Username</span>
+                                                <div>
+                                                    <div class="fw-bold text-dark">@order.Username</div>
+                                                    <div class="text-muted x-small">ID: @order.OrderId.ToString().Substring(0,8)</div>
+                                                </div>
                                             </div>
                                         </td>
-                                        <td>@order.ItemTitle</td>
-                                        <td class="fw-bold text-dark">@order.Amount.ToString("N0") ₫</td>
+                                        <td>
+                                            <div class="text-dark fw-medium">@order.ItemTitle</div>
+                                        </td>
+                                        <td class="fw-bold">@order.Amount.ToString("N0") ₫</td>
                                         <td class="text-muted small">@order.CreatedAt.ToString("MMM dd, yyyy")</td>
                                         <td class="text-end pe-4">
-                                            <span class="badge badge-admin badge-active rounded-pill">COMPLETED</span>
+                                            <span class="badge bg-success-subtle text-success border border-success border-opacity-10 rounded-pill px-3 py-2">Success</span>
                                         </td>
                                     </tr>
                                 }
@@ -226,35 +228,6 @@
                         </table>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- System Quick Actions -->
-        <div class="col-lg-4">
-            <div class="card admin-card shadow-sm mb-4">
-                <div class="card-body p-4">
-                    <h5 class="fw-bold mb-4">Quick Actions</h5>
-                    <div class="d-grid gap-3">
-                        <button class="btn btn-light text-start py-3 px-4 border shadow-sm rounded-3 hover-lift">
-                            <i class="bi bi-file-earmark-spreadsheet me-3 text-success fs-5"></i>Export Sales Report
-                        </button>
-                        <button class="btn btn-light text-start py-3 px-4 border shadow-sm rounded-3 hover-lift">
-                            <i class="bi bi-envelope me-3 text-primary fs-5"></i>Broadcast Message
-                        </button>
-                        <button class="btn btn-light text-start py-3 px-4 border shadow-sm rounded-3 hover-lift">
-                            <i class="bi bi-gear me-3 text-secondary fs-5"></i>System Settings
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card border-0 shadow-lg bg-primary text-white p-4 overflow-hidden position-relative">
-                <div class="position-relative" style="z-index: 2;">
-                    <h5 class="fw-bold">Need Help?</h5>
-                    <p class="small opacity-75 mb-4">Check out our documentation for advanced system configurations.</p>
-                    <a href="#" class="btn btn-light btn-sm rounded-pill px-4 fw-bold">Read Docs</a>
-                </div>
-                <i class="bi bi-shield-lock position-absolute bottom-0 end-0 display-1 opacity-10 mb-n3 me-n3"></i>
             </div>
         </div>
     </div>
@@ -284,6 +257,67 @@
     .ai-analysis-content li {
         margin-bottom: 0.3rem;
     }
+    .x-small { font-size: 0.75rem; }
+    .bg-purple-subtle { background-color: #f5f3ff; }
+    .text-purple { color: #7c3aed; }
+
+    /* Floating AI Panel Styles */
+    .ai-floating-panel {
+        position: fixed;
+        right: -350px; /* Hidden by default */
+        top: 50%;
+        transform: translateY(-50%);
+        width: 350px;
+        background-color: #fff;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        transition: right 0.3s ease-in-out;
+        z-index: 1050;
+        display: flex;
+        flex-direction: column;
+        max-height: 90vh;
+    }
+    .ai-floating-panel.active {
+        right: 20px; /* Visible */
+    }
+    .ai-toggle-btn {
+        position: absolute;
+        left: -50px;
+        top: 50%;
+        transform: translateY(-50%);
+        background-color: #7c3aed;
+        color: #fff;
+        border: none;
+        border-radius: 8px 0 0 8px;
+        padding: 10px 12px;
+        cursor: pointer;
+        box-shadow: -3px 0 8px rgba(0,0,0,0.1);
+        transition: background-color 0.2s ease;
+    }
+    .ai-toggle-btn:hover {
+        background-color: #6d28d9;
+    }
+    .ai-panel-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .ai-panel-body {
+        padding: 1.5rem;
+        flex-grow: 1;
+        overflow-y: auto;
+    }
+    .ai-panel-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #eee;
+        background-color: #f8f9fa;
+        border-radius: 0 0 12px 12px;
+    }
+    .ai-insight-badge {
+        cursor: pointer;
+    }
 </style>
 
 @section Scripts {
@@ -295,207 +329,198 @@
             var allEnrollments = allChartData.map(d => d.enrollmentCount);
             var allRevenues = allChartData.map(d => d.revenue);
 
-            var isFiltered = @((Model.StartDate.HasValue || Model.EndDate.HasValue).ToString().ToLower());
-
-            // If deeply filtered, just show everything returned. Else, default to 12.
-            var labels = isFiltered ? allLabels : allLabels.slice(-12);
-            var enrollments = isFiltered ? allEnrollments : allEnrollments.slice(-12);
-            var revenues = isFiltered ? allRevenues : allRevenues.slice(-12);
-
             var enrollChart, revenueChart;
+
+            if (allChartData.length === 0) {
+                console.warn("No chart data available");
+                // Optional: show a message in the UI
+            }
 
             // Line Chart - Enrollments
             var enrollCtx = document.getElementById('enrollmentChart').getContext('2d');
-            var enrollGradient = enrollCtx.createLinearGradient(0, 0, 0, 280);
-            enrollGradient.addColorStop(0, 'rgba(67, 97, 238, 0.3)');
-            enrollGradient.addColorStop(1, 'rgba(67, 97, 238, 0.02)');
+            var enrollGradient = enrollCtx.createLinearGradient(0, 0, 0, 320);
+            enrollGradient.addColorStop(0, 'rgba(67, 97, 238, 0.2)');
+            enrollGradient.addColorStop(1, 'rgba(67, 97, 238, 0)');
 
             enrollChart = new Chart(enrollCtx, {
                 type: 'line',
                 data: {
-                    labels: labels,
+                    labels: allLabels,
                     datasets: [{
-                        label: 'Students Enrolled',
-                        data: enrollments,
+                        label: 'Enrollments',
+                        data: allEnrollments,
                         borderColor: '#4361ee',
                         backgroundColor: enrollGradient,
-                        borderWidth: 3,
+                        borderWidth: 4,
                         fill: true,
-                        tension: 0.4,
-                        pointRadius: 5,
+                        tension: 0.45,
+                        pointRadius: 0,
+                        pointHoverRadius: 6,
                         pointBackgroundColor: '#4361ee',
                         pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointHoverRadius: 8
+                        pointBorderWidth: 2
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: 'rgba(0,0,0,0.8)',
-                            titleFont: { size: 13 },
-                            bodyFont: { size: 13 },
-                            padding: 12,
-                            cornerRadius: 8
-                        }
-                    },
+                    interaction: { intersect: false, mode: 'index' },
+                    plugins: { legend: { display: false } },
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { precision: 0, font: { size: 12 } },
-                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        y: { 
+                            beginAtZero: true, 
+                            grid: { color: '#f1f5f9', drawBorder: false },
+                            ticks: { font: { family: 'Inter', size: 11 } }
                         },
-                        x: {
-                            ticks: { font: { size: 11 }, maxRotation: 45 },
-                            grid: { display: false }
+                        x: { 
+                            grid: { display: false },
+                            ticks: { font: { family: 'Inter', size: 11 } }
                         }
-                    },
-                    animation: { duration: 1200, easing: 'easeOutQuart' }
+                    }
                 }
             });
 
             // Bar Chart - Revenue
             var revCtx = document.getElementById('revenueChart').getContext('2d');
-            var revGradient = revCtx.createLinearGradient(0, 0, 0, 280);
-            revGradient.addColorStop(0, 'rgba(46, 196, 134, 0.85)');
-            revGradient.addColorStop(1, 'rgba(46, 196, 134, 0.25)');
+            var revGradient = revCtx.createLinearGradient(0, 0, 0, 320);
+            revGradient.addColorStop(0, '#2ec486');
+            revGradient.addColorStop(1, '#a7f3d0');
 
             revenueChart = new Chart(revCtx, {
                 type: 'bar',
                 data: {
-                    labels: labels,
+                    labels: allLabels,
                     datasets: [{
-                        label: 'Revenue (₫)',
-                        data: revenues,
+                        label: 'Revenue',
+                        data: allRevenues,
                         backgroundColor: revGradient,
-                        borderColor: '#2ec486',
-                        borderWidth: 2,
-                        borderRadius: 6,
-                        borderSkipped: false,
-                        hoverBackgroundColor: '#2ec486'
+                        borderRadius: 12,
+                        barThickness: 15
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: 'rgba(0,0,0,0.8)',
-                            titleFont: { size: 13 },
-                            bodyFont: { size: 13 },
-                            padding: 12,
-                            cornerRadius: 8,
-                            callbacks: {
-                                label: function (ctx) {
-                                    return ctx.parsed.y.toLocaleString('vi-VN') + ' ₫';
-                                }
-                            }
-                        }
-                    },
+                    plugins: { legend: { display: false } },
                     scales: {
-                        y: {
-                            beginAtZero: true,
+                        y: { 
+                            beginAtZero: true, 
+                            grid: { color: '#f1f5f9', drawBorder: false },
                             ticks: {
-                                font: { size: 12 },
-                                callback: function (v) {
-                                    if (v >= 1000000) return (v / 1000000).toFixed(1) + 'M';
-                                    if (v >= 1000) return (v / 1000).toFixed(0) + 'K';
-                                    return v;
-                                }
-                            },
-                            grid: { color: 'rgba(0,0,0,0.05)' }
+                                callback: v => (v >= 1000000 ? v/1000000 + 'M' : v/1000 + 'K'),
+                                font: { size: 10 }
+                            }
                         },
-                        x: {
-                            ticks: { font: { size: 11 }, maxRotation: 45 },
-                            grid: { display: false }
-                        }
-                    },
-                    animation: { duration: 1200, easing: 'easeOutQuart' }
+                        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                    }
                 }
             });
-            // Filter function - accessible globally
-            window.filterChart = function(chartType, months) {
-                var slicedLabels = allLabels.slice(-months);
-                var group;
-                
-                if (chartType === 'enroll') {
-                    var slicedData = allEnrollments.slice(-months);
-                    enrollChart.data.labels = slicedLabels;
-                    enrollChart.data.datasets[0].data = slicedData;
-                    enrollChart.update('normal');
-                    group = document.getElementById('enrollFilterGroup');
+
+            window.filterChart = function(type, months) {
+                const labels = allLabels.slice(-months);
+                if (type === 'enroll') {
+                    enrollChart.data.labels = labels;
+                    enrollChart.data.datasets[0].data = allEnrollments.slice(-months);
+                    enrollChart.update();
                 } else {
-                    var slicedData = allRevenues.slice(-months);
-                    revenueChart.data.labels = slicedLabels;
-                    revenueChart.data.datasets[0].data = slicedData;
-                    revenueChart.update('normal');
-                    group = document.getElementById('revenueFilterGroup');
+                    revenueChart.data.labels = labels;
+                    revenueChart.data.datasets[0].data = allRevenues.slice(-months);
+                    revenueChart.update();
                 }
-                
-                // Toggle active state
-                group.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
-                event.target.classList.add('active');
+                const group = event.target.closest('.btn-group');
+                group.querySelectorAll('.btn').forEach(b => b.classList.remove('btn-primary', 'btn-success', 'active'));
+                event.target.classList.add(type === 'enroll' ? 'btn-primary' : 'btn-success', 'active');
             };
-        });
 
-        // AI Analysis
-        window.generateAiAnalysis = async function () {
-            var body = document.getElementById('aiAnalysisBody');
-            var loading = document.getElementById('aiLoading');
-            var result = document.getElementById('aiResult');
-            var btn = document.getElementById('btnAiAnalysis');
+            window.toggleAiPanel = function() {
+                const panel = document.getElementById('aiFloatingPanel');
+                panel.classList.toggle('active');
+            };
 
-            body.style.display = 'block';
-            loading.style.display = 'block';
-            result.innerHTML = '';
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Analyzing...';
+            window.generateAiAnalysis = async function () {
+                const empty = document.getElementById('aiEmpty');
+                const loading = document.getElementById('aiLoading');
+                const result = document.getElementById('aiResult');
 
-            try {
-                var token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-                var startDate = document.getElementById('startDate').value;
-                var endDate = document.getElementById('endDate').value;
-                
-                var resp = await fetch('/Admin/Dashboard?handler=GenerateAiAnalysis', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': token
-                    },
-                    body: JSON.stringify({ startDate: startDate || null, endDate: endDate || null })
-                });
-                var data = await resp.json();
-                result.innerHTML = simpleMarkdownToHtml(data.analysis);
-            } catch (e) {
-                result.innerHTML = '<div class="alert alert-danger">Error: ' + e.message + '</div>';
-            } finally {
-                loading.style.display = 'none';
-                btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-stars me-1"></i>Regenerate';
+                if(empty) empty.style.display = 'none';
+                loading.style.display = 'block';
+                result.innerHTML = '';
+
+                try {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const startDate = urlParams.get('StartDate');
+                    const endDate = urlParams.get('EndDate');
+
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                    const resp = await fetch('/Admin/Dashboard?handler=GenerateAiAnalysis', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                        body: JSON.stringify({ startDate, endDate })
+                    });
+                    const data = await resp.json();
+                    result.innerHTML = `<h6><i class="bi bi-graph-up me-2"></i>Revenue Analysis</h6>` + simpleMarkdownToHtml(data.analysis);
+                } catch (e) {
+                    result.innerHTML = `<div class="alert alert-danger font-monospace small">${e.message}</div>`;
+                } finally {
+                    loading.style.display = 'none';
+                    result.scrollTop = 0;
+                }
+            };
+
+            window.askAiQuestion = async function() {
+                const input = document.getElementById('aiAdminInput');
+                const q = input.value.trim();
+                if(!q) return;
+
+                const empty = document.getElementById('aiEmpty');
+                const loading = document.getElementById('aiLoading');
+                const result = document.getElementById('aiResult');
+                const btn = document.getElementById('btnSendAi');
+
+                if(empty) empty.style.display = 'none';
+                loading.style.display = 'block';
+                input.value = '';
+                btn.disabled = true;
+
+                // Append question
+                const qHtml = `<div class="mb-3 p-2 bg-light rounded-3 small border-start border-primary border-4 shadow-sm">
+                                <strong>You:</strong><br>${q}
+                               </div>`;
+                result.innerHTML += qHtml;
+                result.scrollTop = result.scrollHeight;
+
+                try {
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                    const resp = await fetch('/Admin/Dashboard?handler=AskAdmin', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                        body: JSON.stringify({ question: q })
+                    });
+                    const data = await resp.json();
+                    const aHtml = `<div class="mb-4 small"><strong>AI:</strong><br>${simpleMarkdownToHtml(data.answer)}</div>`;
+                    result.innerHTML += aHtml;
+                } catch (e) {
+                    result.innerHTML += `<div class="alert alert-danger font-monospace small">${e.message}</div>`;
+                } finally {
+                    loading.style.display = 'none';
+                    btn.disabled = false;
+                    result.scrollTop = result.scrollHeight;
+                }
+            };
+
+            window.clearAiChat = function() {
+                document.getElementById('aiResult').innerHTML = '';
+                document.getElementById('aiEmpty').style.display = 'block';
+            };
+
+            function simpleMarkdownToHtml(md) {
+                if (!md) return '';
+                return md
+                    .replace(/### (.*)/g, '<h6 class="fw-bold mt-3">$1</h6>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/^- (.*)/gm, '<li>$1</li>')
+                    .replace(/\n/g, '<br>');
             }
-        };
-
-        function simpleMarkdownToHtml(md) {
-            if (!md) return '';
-            var html = md
-                .replace(/### (.*)/g, '<h3>$1</h3>')
-                .replace(/## (.*)/g, '<h3>$1</h3>')
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/^- (.*)/gm, '<li>$1</li>')
-                .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
-                .replace(/\n/g, '<br>');
-            // Fix multiple consecutive <ul> tags
-            html = html.replace(/<\/ul><br><ul>/g, '');
-            html = html.replace(/<br><li>/g, '<li>');
-            html = html.replace(/<\/li><br>/g, '</li>');
-            // Wrap orphaned <li> in <ul>
-            html = html.replace(/(?<!<ul>)(<li>)/g, '<ul>$1');
-            html = html.replace(/(<\/li>)(?!<\/ul>|<li>)/g, '$1</ul>');
-            return html;
-        }
+        });
     </script>
 }

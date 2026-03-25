@@ -45,7 +45,13 @@ namespace OnlineLearningPlatformAss2.Service.Services
             vnpayData.Add("vnp_OrderInfo", model.OrderDescription);
             vnpayData.Add("vnp_OrderType", _configuration["VnPay:OrderType"]);
             vnpayData.Add("vnp_Locale", string.IsNullOrEmpty(model.Locale) ? "vn" : model.Locale);
-            vnpayData.Add("vnp_ReturnUrl", _configuration["VnPay:CallbackUrl"]);
+            var callbackUrl = _configuration["VnPay:CallbackUrl"];
+            if (callbackUrl != null && callbackUrl.StartsWith("/"))
+            {
+                // Dynamic callback based on current request
+                callbackUrl = $"{context.Request.Scheme}://{context.Request.Host}{callbackUrl}";
+            }
+            vnpayData.Add("vnp_ReturnUrl", callbackUrl);
             vnpayData.Add("vnp_IpAddr", GetIpAddress(context));
             vnpayData.Add("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
 
@@ -112,6 +118,9 @@ namespace OnlineLearningPlatformAss2.Service.Services
             );
             
             _logger.LogInformation("Signature Valid: {IsValidSignature}", isValidSignature);
+            
+            var responseCode = responseData.ContainsKey("vnp_ResponseCode") ? responseData["vnp_ResponseCode"] : "null";
+            _logger.LogInformation("VNPay Response Code: {ResponseCode}", responseCode);
             _logger.LogInformation("-----------------------------------");
 
             return new VnPayResponseModel

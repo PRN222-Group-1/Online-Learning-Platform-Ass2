@@ -195,6 +195,11 @@ public class LearnModel : PageModel
 
     public async Task<IActionResult> OnPostGenerateSummaryAsync([FromBody] LearnAiRequest request)
     {
+        if (request == null)
+        {
+            return new JsonResult(new { summary = "Invalid request data received." });
+        }
+
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!Guid.TryParse(userIdString, out var userId)) return Unauthorized();
 
@@ -207,7 +212,7 @@ public class LearnModel : PageModel
 
         if (lesson == null || string.IsNullOrEmpty(lesson.VideoUrl))
         {
-             return new JsonResult(new { summary = "Video not available for summary generation." });
+             return new JsonResult(new { summary = "Video URL not found for this lesson. Summary generation is only supported for video lessons." });
         }
         
         try 
@@ -241,6 +246,16 @@ public class LearnModel : PageModel
 
     public async Task<IActionResult> OnPostAskAiAsync([FromBody] LearnAiQuestionRequest request)
     {
+        if (request == null)
+        {
+            return new JsonResult(new { answer = "Invalid request data received." });
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Question))
+        {
+            return new JsonResult(new { answer = "Please provide a question." });
+        }
+
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!Guid.TryParse(userIdString, out var userId)) return Unauthorized();
 
@@ -249,11 +264,17 @@ public class LearnModel : PageModel
 
         var transcript = await _courseService.GetLessonTranscriptAsync(enrollmentId.Value, request.LessonId);
         
-        string context = string.IsNullOrEmpty(transcript) ? "No transcript available." : transcript;
+        string context = string.IsNullOrEmpty(transcript) ? "No transcript available for this lesson." : transcript;
         
-        var answer = await _chatbotService.AskWithContextAsync(request.Question, context);
-        
-        return new JsonResult(new { answer });
+        try 
+        {
+            var answer = await _chatbotService.AskWithContextAsync(request.Question, context);
+            return new JsonResult(new { answer });
+        }
+        catch (Exception ex)
+        {
+            return new JsonResult(new { answer = $"Error contacting AI: {ex.Message}" });
+        }
     }
 
     public class LearnUpdateLastViewRequest

@@ -43,4 +43,19 @@ public class MyOrdersModel : PageModel
 
         return Page();
     }
+
+    public async Task<IActionResult> OnPostCancelAsync(Guid orderId)
+    {
+        var result = await _orderService.CancelOrderAsync(orderId);
+        if (result)
+        {
+            TempData["SuccessMessage"] = "Order cancelled successfully.";
+        }
+        else
+        {
+            TempData["ErrorMessage"] = "Unable to cancel the order. It might already be processed or cancelled.";
+        }
+
+        return RedirectToPage();
+    }
 }

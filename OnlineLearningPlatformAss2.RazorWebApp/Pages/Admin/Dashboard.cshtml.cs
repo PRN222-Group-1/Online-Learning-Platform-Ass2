@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using OnlineLearningPlatformAss2.Service.DTOs.Admin;
+using OnlineLearningPlatformAss2.Service.DTOs.Chatbot;
 using OnlineLearningPlatformAss2.Service.Services.Interfaces;
 
 namespace OnlineLearningPlatformAss2.RazorWebApp.Pages.Admin;
@@ -35,26 +36,45 @@ public class DashboardModel : PageModel
     public async Task<IActionResult> OnPostGenerateAiAnalysisAsync([FromBody] DateFilterRequest request)
     {
         Stats = await _adminService.GetStatsAsync(request?.StartDate, request?.EndDate);
+        var context = BuildAdminContext(Stats);
 
-        // Build context string for AI
+        var analysis = await _chatbotService.AnalyzeRevenueAsync(context);
+        return new JsonResult(new { analysis });
+    }
+    public async Task<IActionResult> OnPostAskAdminAsync([FromBody] AdminQuestionRequest request)
+    {
+        if (string.IsNullOrEmpty(request.Question)) return new JsonResult(new { answer = "" });
+
+        Stats = await _adminService.GetStatsAsync();
+        var context = BuildAdminContext(Stats);
+
+        var answer = await _chatbotService.AskAdminAsync(request.Question, context, new List<ChatHistoryItem>());
+        return new JsonResult(new { answer });
+    }
+
+    private string BuildAdminContext(AdminStatsDto stats)
+    {
         var sb = new StringBuilder();
         sb.AppendLine($"=== TỔNG QUAN HỆ THỐNG ===");
-        sb.AppendLine($"Tổng doanh thu: {Stats.TotalRevenue:N0} ₫");
-        sb.AppendLine($"Lợi nhuận ròng (30%): {Stats.TotalNetProfit:N0} ₫");
-        sb.AppendLine($"Tổng sinh viên: {Stats.TotalUsers}");
-        sb.AppendLine($"Tổng giảng viên: {Stats.TotalInstructors}");
-        sb.AppendLine($"Tổng khóa học: {Stats.TotalCourses}");
-        sb.AppendLine($"Tổng lượt đăng ký: {Stats.TotalEnrollments}");
-        sb.AppendLine($"Khóa học chờ duyệt: {Stats.PendingCourses}");
+        sb.AppendLine($"Tổng doanh thu: {stats.TotalRevenue:N0} ₫");
+        sb.AppendLine($"Lợi nhuận ròng (30%): {stats.TotalNetProfit:N0} ₫");
+        sb.AppendLine($"Tổng sinh viên: {stats.TotalUsers}");
+        sb.AppendLine($"Tổng giảng viên: {stats.TotalInstructors}");
+        sb.AppendLine($"Tổng khóa học: {stats.TotalCourses}");
+        sb.AppendLine($"Tổng lượt đăng ký: {stats.TotalEnrollments}");
+        sb.AppendLine($"Khóa học chờ duyệt: {stats.PendingCourses}");
         sb.AppendLine();
         sb.AppendLine("=== DỮ LIỆU THEO THÁNG (12 tháng gần nhất) ===");
-        foreach (var m in Stats.MonthlyChartData)
+        foreach (var m in stats.MonthlyChartData)
         {
             sb.AppendLine($"- {m.Month}: {m.EnrollmentCount} sinh viên đăng ký, doanh thu {m.Revenue:N0} ₫");
         }
+        return sb.ToString();
+    }
 
-        var analysis = await _chatbotService.AnalyzeRevenueAsync(sb.ToString());
-        return new JsonResult(new { analysis });
+    public class AdminQuestionRequest
+    {
+        public string Question { get; set; } = "";
     }
 }
 

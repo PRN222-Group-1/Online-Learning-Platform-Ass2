@@ -28,7 +28,7 @@ public interface IAdminRepository
     Task<IEnumerable<Category>> GetAllCategoriesAsync();
     Task<IEnumerable<User>> GetInstructorsAsync();
 
-    // Course CRUD
+    // Course deletion by ID
     Task DeleteCourseAsync(Guid courseId);
     
     // Users

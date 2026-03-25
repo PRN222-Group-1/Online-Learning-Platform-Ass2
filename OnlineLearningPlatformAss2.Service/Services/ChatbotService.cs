@@ -99,7 +99,7 @@ public class ChatbotService(HttpClient httpClient, ICourseRepository courseRepos
     {
         var messages = new List<object>
         {
-            new { role = "system", content = "You are an expert educational content summarizer. Analyze the provided video transcript and create a concise, structured summary. Structure the summary with headers (###) and bullet points. Focus on key concepts and learning outcomes. Return ONLY the summary, no intro/outro text." },
+            new { role = "system", content = "You are an expert educational content summarizer. Analyze the provided video transcript and create a concise, structured summary. Structure the summary with headers (###) and bullet points. IMPORTANT: For each key section or point, please include the relevant timestamp from the video in [mm:ss] format (e.g., [01:23]). Focus on key concepts and learning outcomes. Return ONLY the summary, no intro/outro text." },
             new { role = "user", content = transcript }
         };
 
@@ -167,6 +167,47 @@ public class ChatbotService(HttpClient httpClient, ICourseRepository courseRepos
             model = "llama-3.3-70b-versatile",
             messages = messages,
             temperature = 0.4
+        };
+
+        return await SendToAi(payload);
+    }
+
+    public async Task<string> AskAdminAsync(string question, string statsContext, List<ChatHistoryItem> history)
+    {
+        if (string.IsNullOrEmpty(_groqApiKey))
+        {
+            return "Xin lỗi, chức năng AI chưa được cấu hình (Thiếu API Key).";
+        }
+
+        var messages = new List<object>
+        {
+            new
+            {
+                role = "system",
+                content = "Bạn là một trợ lý AI phân tích dữ liệu chuyên nghiệp cho Admin của nền tảng học trực tuyến. " +
+                          "Dựa trên dữ liệu thống kê hệ thống được cung cấp dưới đây, hãy trả lời các câu hỏi của Admin.\n\n" +
+                          "DỮ LIỆU HỆ THỐNG:\n" +
+                          statsContext + "\n\n" +
+                          "NHIỆM VỤ:\n" +
+                          "1. Phân tích dữ liệu và trả lời chính xác các câu hỏi về doanh thu, sinh viên, khóa học.\n" +
+                          "2. Nếu Admin hỏi về xu hướng, hãy dựa vào dữ liệu theo tháng để đưa ra nhận xét.\n" +
+                          "3. Sử dụng Markdown để trả lời (headers, bold, bullet points) cho dễ đọc.\n" +
+                          "4. Trả lời bằng tiếng Việt, chuyên nghiệp và ngắn gọn."
+            }
+        };
+
+        if (history != null && history.Any())
+        {
+            messages.AddRange(history.Select(h => new { role = h.Role, content = h.Content }));
+        }
+
+        messages.Add(new { role = "user", content = question });
+
+        var payload = new
+        {
+            model = "llama-3.3-70b-versatile",
+            messages = messages,
+            temperature = 0.5
         };
 
         return await SendToAi(payload);

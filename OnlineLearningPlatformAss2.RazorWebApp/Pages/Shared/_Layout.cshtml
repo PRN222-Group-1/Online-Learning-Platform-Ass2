@@ -178,12 +178,8 @@
           }
           else
           {
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Log In</a>
-              <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item" asp-page="/User/Login">Learner Login</a></li>
-                <li><a class="dropdown-item text-danger fw-bold" asp-page="/Auth/Login">Admin/Instructor Login</a></li>
-              </ul>
+            <li class="nav-item">
+              <a class="nav-link" asp-page="/User/Login">Log In</a>
             </li>
             <li class="nav-item">
               <a class="btn btn-primary" asp-page="/User/Register">Join for Free</a>
@@ -330,10 +326,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         const data = await response.json();
                         if (data.courses && data.courses.length > 0) {
                             renderSearchPreview(data.courses);
-                            searchPreviewResults.classList.remove('d-none');
                         } else {
                             renderEmptyPreview();
-                            searchPreviewResults.classList.remove('d-none');
                         }
                     }
                 } catch (error) {
@@ -343,43 +337,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }, 300);
         });
-
-    // Intersection Observer for section animations
-    const observerOptions = {
-        threshold: 0.1
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-            }
-        });
-    }, observerOptions);
-        function renderEmptyPreview() {
-            searchPreviewResults.innerHTML = `
-                <div class="p-3 text-center text-muted">
-                    <i class="bi bi-search mb-2 d-block fs-4"></i>
-                    <p class="mb-0 small">No matching courses found</p>
-                </div>
-            `;
-        }
-
-        function renderSearchPreview(courses) {
-            searchPreviewResults.innerHTML = courses.map(course => `
-                <a href="/Course/Details/${course.id}" class="search-preview-item">
-                    <img src="${course.imageUrl || 'https://via.placeholder.com/60x34'}" alt="${course.title}">
-                    <div class="item-info">
-                        <div class="item-title">${course.title}</div>
-                        <div class="item-meta">${course.categoryName} • ${course.instructorName}</div>
-                    </div>
-                </a>
-            `).join('');
-        }
-
-    document.querySelectorAll('section').forEach(section => {
-        observer.observe(section);
-    });
 
         globalSearchInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
@@ -405,9 +362,36 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Intersection Observer for section animations
+    const observerOptions = {
+        threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, observerOptions);
+
+    document.querySelectorAll('section').forEach(section => {
+        observer.observe(section);
+    });
+
+    function renderEmptyPreview() {
+        previewItemsList.innerHTML = `
+            <div class="px-3 py-4 text-center">
+                <i class="bi bi-search text-muted d-block mb-2 h4"></i>
+                <p class="text-muted small mb-0">No matching courses found</p>
+            </div>
+        `;
+        searchPreviewResults.classList.remove('d-none');
+    }
+
     function renderSearchPreview(courses) {
         previewItemsList.innerHTML = courses.map(course => `
-            <a href="/Course/Details?id=${course.id}" class="preview-item">
+            <a href="/Course/Details/${course.id}" class="preview-item">
                 <img src="${course.image || 'https://via.placeholder.com/60x40?text=Course'}" class="preview-img" alt="${course.title}">
                 <div class="preview-info">
                     <h5 class="preview-title">${course.title}</h5>
@@ -417,15 +401,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </a>
         `).join('');
-    }
-    
-    function renderEmptyPreview() {
-        previewItemsList.innerHTML = `
-            <div class="px-3 py-4 text-center">
-                <i class="bi bi-search text-muted d-block mb-2 h4"></i>
-                <p class="text-muted small mb-0">No matching courses found</p>
-            </div>
-        `;
+        searchPreviewResults.classList.remove('d-none');
     }
 
     // Smooth scrolling for anchor links

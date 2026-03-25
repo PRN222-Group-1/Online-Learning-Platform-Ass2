@@ -42,6 +42,16 @@
         #suspensionOverlay.active .suspension-content {
             transform: scale(1);
         }
+        .timestamp-link {
+            transition: all 0.2s ease;
+            padding: 1px 4px;
+            border-radius: 4px;
+        }
+        .timestamp-link:hover {
+            background-color: rgba(13, 110, 253, 0.1);
+            color: #0a58ca !important;
+            text-decoration: underline !important;
+        }
     </style>
 </head>
 
@@ -74,7 +84,7 @@
                             <div id="courseProgressBar" class="progress-bar bg-success" role="progressbar" style="width: @Model.CourseLearn.Progress%" aria-valuenow="@Model.CourseLearn.Progress" aria-valuemin="0" aria-valuemax="100"></div>
                         </div>
                     </div>
-                    <a href="/Certificates/View/@Model.CourseLearn.CertificateId" id="certificateBtn" class="btn btn-outline-success btn-sm @(Model.CourseLearn.Progress < 100 ? "d-none" : "")" target="_blank">
+                    <a asp-page="/Certificates/View" asp-route-id="@Model.CourseLearn.CertificateId" id="certificateBtn" class="btn btn-outline-success btn-sm @(Model.CourseLearn.Progress < 100 ? "d-none" : "")" target="_blank">
                         <i class="bi bi-patch-check me-1"></i> Certificate
                     </a>
                 </div>
@@ -87,7 +97,7 @@
                         <div class="p-4 mx-auto" style="max-width: 1200px;">
                             
                             <!-- Video Section -->
-                            <div class="video-card bg-black rounded-4 shadow-sm overflow-hidden mb-4">
+                            <div class="video-card bg-black rounded-4 shadow-sm overflow-hidden mb-4" id="videoCard" style="@(string.IsNullOrEmpty(Model.CourseLearn.CurrentLesson?.VideoUrl) ? "display:none;" : "")">
                                 <div class="video-container w-100" id="videoContainer">
                                     @if (!string.IsNullOrEmpty(Model.CourseLearn.CurrentLesson?.VideoUrl))
                                     {
@@ -100,15 +110,6 @@
                                                 }
                                             }
                                             <iframe id="youtubePlayer" src="@videoUrl" allowfullscreen></iframe>
-                                        </div>
-                                    }
-                                    else
-                                    {
-                                        <div class="d-flex align-items-center justify-content-center ratio ratio-16x9 bg-light text-secondary">
-                                            <div class="text-center">
-                                                <i class="bi bi-file-text display-1 mb-3"></i>
-                                                <p class="h5">Included Reading Material</p>
-                                            </div>
                                         </div>
                                     }
                                 </div>
@@ -131,7 +132,7 @@
                                     </button>
                                     @if (Model.CourseLearn.Progress >= 100)
                                     {
-                                        <a href="/Certificates/View/@Model.CourseLearn.CertificateId" id="certificateBtnMain" class="btn btn-outline-primary rounded-pill px-4" target="_blank">
+                                        <a asp-page="/Certificates/View" asp-route-id="@Model.CourseLearn.CertificateId" id="certificateBtnMain" class="btn btn-outline-primary rounded-pill px-4" target="_blank">
                                             Certificate
                                         </a>
                                     }
@@ -490,8 +491,16 @@
                          markCompleteBtn.onclick = function() { markAsCompleted(); };
                      }
                 }
+                
+                // Show video card
+                const videoCard = document.getElementById('videoCard');
+                if(videoCard) videoCard.style.display = 'block';
             } else {
-                videoContainer.innerHTML = `<div class="d-flex align-items-center justify-content-center py-5 bg-light text-secondary"><div class="text-center"><i class="bi bi-file-text display-1 mb-3"></i><p class="h5">Reading Material</p></div></div>`;
+                videoContainer.innerHTML = '';
+                // Hide video card
+                const videoCard = document.getElementById('videoCard');
+                if(videoCard) videoCard.style.display = 'none';
+                
                 if(markCompleteBtn) {
                      markCompleteBtn.style.display = 'inline-block';
                      updateMarkCompleteButton(lesson.isCompleted);
@@ -682,41 +691,75 @@
          * Handles hours [hh:mm:ss] as well.
          */
         function convertTimestampsToLinks(text) {
-            // Regex to find timestamps: [01:23], (01:23), or 01:23
-            // Group 1: optional leading [ or (
-            // Group 2: hours (optional)
-            // Group 3: minutes
-            // Group 4: seconds
-            // Group 5: optional trailing ] or )
-            const timestampRegex = /([\[\(])?(\d{1,2}:)?(\d{1,2}):(\d{2})([\]\)])?/g;
+            if (!text) return '';
+            // Improved regex: matches [00:30], (00:30), [1:23:45], 01:23 with optional brackets
+            // Specifically avoids matching isolated number pairs that aren't timestamps
+            const timestampRegex = /(?:[\[\(])?(?:(\d{1,2}):)?(\d{1,2}):(\d{2})(?:[\]\)])?/g;
             
-            return text.replace(timestampRegex, (match, openBracket, hours, minutes, seconds, closeBracket) => {
+            return text.replace(timestampRegex, (match, hours, minutes, seconds) => {
                 let totalSeconds = 0;
                 if (hours) {
-                    totalSeconds += parseInt(hours.replace(':', '')) * 3600;
+                    totalSeconds += parseInt(hours) * 3600;
                 }
                 totalSeconds += parseInt(minutes) * 60 + parseInt(seconds);
                 
-                return `<a href="javascript:void(0)" onclick="seekVideo(${totalSeconds})" class="text-primary fw-bold text-decoration-none">${match}</a>`;
+                // Title and styling improvements
+                const timeStr = [hours, minutes, seconds].filter(x => x !== undefined).join(':');
+                return `<a href="javascript:void(0)" onclick="seekVideo(${totalSeconds}); return false;" class="text-primary fw-bold text-decoration-none timestamp-link" title="Seek to ${timeStr}">${match}</a>`;
             });
         }
 
         function seekVideo(seconds) {
-            const video = document.getElementById('videoPlayer');
-            if (video) {
-                video.currentTime = seconds;
-                video.play();
-                video.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            } else {
-                // Try YouTube iframe
-                const iframe = document.querySelector('#videoContainer iframe');
-                if (iframe) {
-                    // Try postMessage for YouTube. Requires enablejsapi=1 in URL.
-                    iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'seekTo', args: [seconds, true] }), '*');
-                    // Also fire playVideo to ensure it starts playing if it was paused
-                    iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*');
-                    iframe.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            console.log("=== SEEKING VIDEO TO:", seconds, "SECONDS ===");
+            
+            try {
+                // 1. Target local HTML5 video
+                const video = document.getElementById('videoPlayer');
+                if (video && video.readyState >= 1) { // 1 = HAVE_METADATA
+                    console.log("Local video found, seeking...");
+                    video.currentTime = seconds;
+                    video.play().catch(e => console.warn("Auto-play failed after seek:", e));
+                    video.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return;
                 }
+
+                // 2. Target YouTube iframe (by ID first, then selector)
+                const youtubeIframe = document.getElementById('youtubePlayer') || 
+                                     document.querySelector('#videoContainer iframe') || 
+                                     document.querySelector('iframe[src*="youtube.com"]');
+                
+                if (youtubeIframe) {
+                    console.log("YouTube player found, sending postMessage commands...");
+                    
+                    // Simple check if url contains enablejsapi
+                    if (!youtubeIframe.src.includes('enablejsapi=1')) {
+                        console.warn("YouTube iframe missing enablejsapi=1, seeking might not work!");
+                    }
+
+                    // Standard YouTube Iframe API postMessage command
+                    const seekCmd = JSON.stringify({
+                        event: 'command',
+                        func: 'seekTo',
+                        args: [seconds, true]
+                    });
+                    
+                    const playCmd = JSON.stringify({
+                        event: 'command',
+                        func: 'playVideo',
+                        args: []
+                    });
+                    
+                    youtubeIframe.contentWindow.postMessage(seekCmd, '*');
+                    youtubeIframe.contentWindow.postMessage(playCmd, '*');
+                    
+                    youtubeIframe.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    console.log("Seek/Play commands sent to YouTube iframe.");
+                } else {
+                    console.error("CRITICAL: No active video player found to seek.");
+                    alert("Không tìm thấy trình phát video để nhảy đến thời điểm này.");
+                }
+            } catch (err) {
+                console.error("Error during seekVideo:", err);
             }
         }
 

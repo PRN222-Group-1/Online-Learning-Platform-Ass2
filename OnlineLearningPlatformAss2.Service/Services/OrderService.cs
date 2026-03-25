@@ -258,4 +258,14 @@ public class OrderService(
             PendingOrders = orders.Count(o => o.Status == "Pending")
         };
     }
+
+    public async Task<bool> CancelOrderAsync(Guid orderId)
+    {
+        var order = await orderRepository.GetByIdAsync(orderId);
+        if (order == null || order.Status != "Pending") return false;
+
+        order.Status = "Cancelled";
+        await orderRepository.SaveChangesAsync();
+        return true;
+    }
 }

@@ -187,7 +187,7 @@ public class AdminRepository(OnlineLearningSystemDbContext context) : IAdminRepo
             .ToListAsync();
     }
 
-    // Course CRUD
+
     public async Task DeleteCourseAsync(Guid courseId)
     {
         var course = await context.Courses.FindAsync(courseId);

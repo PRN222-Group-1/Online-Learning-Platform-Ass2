@@ -8,4 +8,5 @@ public interface IChatbotService
     Task<string> SummarizeTranscriptAsync(string transcript);
     Task<string> AskWithContextAsync(string question, string context);
     Task<string> AnalyzeRevenueAsync(string statsContext);
+    Task<string> AskAdminAsync(string question, string statsContext, List<ChatHistoryItem> history);
 }
